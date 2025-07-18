@@ -21,25 +21,91 @@
         .view { transition: opacity 0.3s ease-in-out; }
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+        .sticky-header { position: sticky; top: 0; background-color: #374151; }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
     <div id="app-container" class="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] relative">
         
+        <!-- Vista de Carga / Autenticación -->
+        <div id="loading-view" class="view absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+            <h1 class="text-2xl font-bold text-white">Conectando...</h1>
+        </div>
+
+        <!-- Vista de Inicio de Sesión -->
+        <div id="login-view" class="view hidden absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+            <h1 id="auth-title" class="text-4xl font-bold text-white mb-4">Iniciar Sesión</h1>
+            <p class="text-gray-400 mb-8">Ingresa a tu cuenta para ver tu inventario.</p>
+            
+            <div class="w-full space-y-4">
+                <input type="email" id="email-input" placeholder="Correo electrónico" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 focus:border-indigo-500">
+                <input type="password" id="password-input" placeholder="Contraseña" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 focus:border-indigo-500">
+            </div>
+            
+            <button id="auth-action-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Iniciar Sesión</button>
+
+            <p class="text-sm text-gray-400 mt-4">
+                <span id="auth-toggle-text">¿No tienes cuenta?</span>
+                <button id="auth-toggle-btn" class="font-semibold text-indigo-400 hover:text-indigo-300">Regístrate</button>
+            </p>
+
+            <div id="login-error-message" class="mt-4 text-red-400 text-sm"></div>
+        </div>
+
         <!-- Vistas de la Aplicación -->
-        <div class="flex-grow overflow-hidden relative">
+        <div id="main-content" class="hidden flex-grow overflow-hidden relative">
             <!-- Menú Principal -->
-            <div id="main-menu-view" class="view absolute inset-0 flex flex-col items-center justify-center text-center">
-                <h1 class="text-4xl font-bold text-white mb-8">Inventario KFC</h1>
-                <div class="w-full space-y-3">
-                    <button id="continue-inventory-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Inventario</button>
-                    <button id="continue-order-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Pedido</button>
-                    <button id="start-new-inventory-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Nuevo Inventario</button>
-                    <button id="make-order-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Hacer Pedido</button>
-                    <button id="history-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Ver Historial</button>
-                    <button id="manage-items-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Gestionar Ítems</button>
+            <div id="main-menu-view" class="view absolute inset-0 flex flex-col text-center">
+                <div class="p-4 bg-gray-900 rounded-t-xl">
+                    <p class="text-xs text-gray-400">Sesión iniciada como:</p>
+                    <p id="user-email" class="text-sm font-semibold truncate"></p>
                 </div>
+                <div class="flex-grow flex flex-col items-center justify-center">
+                    <h1 class="text-4xl font-bold text-white mb-8">Inventario KFC</h1>
+                    <div class="w-full space-y-3 px-4">
+                        <button id="continue-inventory-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Inventario</button>
+                        <button id="continue-order-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Pedido</button>
+                        <button id="start-new-inventory-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Nuevo Inventario</button>
+                        <button id="make-order-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Hacer Pedido</button>
+                        <button id="consumption-report-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg">Reporte de Consumo</button>
+                        <button id="history-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Ver Historial</button>
+                        <button id="manage-items-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Gestionar Ítems</button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <button id="logout-btn" class="text-sm text-red-400 hover:text-red-300">Cerrar Sesión</button>
+                </div>
+            </div>
+            
+            <!-- Reporte de Consumo: Selección -->
+            <div id="consumption-setup-view" class="view hidden absolute inset-0 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="back-to-menu-from-consumption-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 class="text-xl font-bold text-center text-gray-100">Reporte de Consumo</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div class="w-full space-y-4">
+                    <div>
+                        <label for="start-inventory-select" class="block text-sm font-medium text-gray-300 mb-1">Inventario Inicial</label>
+                        <select id="start-inventory-select" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600"></select>
+                    </div>
+                    <div>
+                        <label for="end-inventory-select" class="block text-sm font-medium text-gray-300 mb-1">Inventario Final</label>
+                        <select id="end-inventory-select" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600"></select>
+                    </div>
+                </div>
+                <button id="generate-consumption-report-btn" class="mt-8 w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg">Generar Reporte</button>
+            </div>
+
+            <!-- Reporte de Consumo: Resultado -->
+            <div id="consumption-result-view" class="view hidden absolute inset-0 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="back-to-consumption-setup-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 class="text-xl font-bold text-center text-gray-100">Resultado del Reporte</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div id="consumption-result-list" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
             </div>
 
             <!-- Seleccionar Inventario para Pedido -->
@@ -96,7 +162,30 @@
                     <h1 id="order-summary-title" class="text-xl font-bold text-center text-gray-100">Resumen de Pedido</h1>
                     <div class="w-8"></div>
                 </div>
+                 <input type="search" id="order-summary-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
                 <div id="order-summary-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
+            </div>
+
+            <!-- Editar Pedido -->
+            <div id="edit-order-view" class="view hidden absolute inset-0 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="back-to-history-from-edit-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 id="edit-order-title" class="text-xl font-bold text-center text-gray-100">Editar Pedido</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div id="edit-order-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
+                <button id="save-edited-order-btn" class="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Guardar Cambios</button>
+            </div>
+
+            <!-- Editar Inventario -->
+            <div id="edit-inventory-view" class="view hidden absolute inset-0 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="back-to-history-from-edit-inv-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 id="edit-inventory-title" class="text-xl font-bold text-center text-gray-100">Editar Inventario</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div id="edit-inventory-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
+                <button id="save-edited-inventory-btn" class="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Guardar Cambios</button>
             </div>
 
             <!-- Configuración de Inventario -->
@@ -132,6 +221,7 @@
                     <h1 class="text-2xl font-bold text-center text-gray-100">Resumen</h1>
                     <div class="w-8"></div>
                 </div>
+                <input type="search" id="inventory-summary-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
                 <div id="summary-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
             </div>
 
@@ -162,6 +252,7 @@
                     <h1 class="text-2xl font-bold text-center text-gray-100">Gestionar Ítems</h1>
                     <div class="w-8"></div>
                 </div>
+                 <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
                 <div class="flex gap-2 mb-4">
                     <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600">
                     <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold">+</button>
@@ -194,23 +285,45 @@
         <div id="nav-buttons" class="mt-6 flex justify-center space-x-4" style="display: none;">
             <button data-context="inventory" id="summary-btn" class="bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">Resumen</button>
             <button data-context="inventory" id="download-pdf-btn" class="bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">PDF</button>
-            <button id="main-menu-btn" class="bg-red-800 hover:bg-red-700 text-sm text-white font-medium py-2 px-4 rounded-lg">Menú Principal</button>
+            <button id="main-menu-btn" class="bg-red-800 hover:bg-red-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Menú Principal</button>
         </div>
     </div>
     
     <div id="toast-notification" class="hidden fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50"></div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const KEYS = {
-            CURRENT_INV: 'inventoryApp_current',
-            CURRENT_ORDER: 'inventoryApp_currentOrder',
-            HISTORY: 'inventoryApp_history',
-            ITEMS: 'inventoryApp_masterItems'
+    <!-- Modal de Confirmación -->
+    <div id="confirm-delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-lg p-6 text-center shadow-xl">
+            <h3 id="confirm-delete-title" class="text-lg font-bold text-white mb-2">¿Estás seguro?</h3>
+            <p id="confirm-delete-message" class="text-gray-300 mb-6">Esta acción no se puede deshacer.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancel-delete-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg">Cancelar</button>
+                <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6 rounded-lg">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, writeBatch, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7MrPbY7cwywvOnyz_-5RXFO1S40Z6Ous",
+            authDomain: "mi-app-inventario-e639f.firebaseapp.com",
+            projectId: "mi-app-inventario-e639f",
+            storageBucket: "mi-app-inventario-e639f.appspot.com",
+            messagingSenderId: "97971834944",
+            appId: "1:97971834944:web:604dbbc1cf96964fcd4fa5"
         };
 
-        const initialItemsList = ["ACEITE FRITURA", "ALMIBAR PARA FACTURA X 7 KG", "AZUCAR INDIVIDUAL KFC", "BANDEJA CANOA KFC", "BOLSA DE LLEVAR GRANDE KFC2", "BOLSA DE RESIDUOS CHICA", "BOLSA DE RESIDUOS NEGRA X 250 UND", "BOLSA DE RESIDUOS TRANSPARENTE", "BOLSA PARA MARINADO K EN ROLLOS", "BOLSA SIN MANIJA GRANDE KFC X 250 UND", "BUCKET 130OZ KFC X 300UN", "BUCKET 50OZ X 420 UND", "BUCKET 85OZ X 330 UND", "CAFE EN POLVO", "CAJA BIG BOXKFC", "CAJA SNACK CON TAPA KFC X 800 UND", "CANDADITOS KFC", "CHOCOLATE CON MANI X 4.32KG", "CHOCOLATE EN POLVO X 4KG", "CINTA DE SEGURIDAD KFC X 36 UND", "COFIA DE FISELINA DESCARTABLE", "CONO HELADO", "CUCHARITA PARA HELADO X 1000 UND", "CUCHILLO", "EDULCORANTE INDIVIDUAL KFC", "ESTUCHE PAPA CHICA KFC X 800 UND", "ESTUCHE PAPAS GRANDES KFC", "ESTUCHE PAPAS MEDIANAS KFC", "ESTUCHE POPCORN GRANDE", "ESTUCHE POPCORN MEDIANO", "ETC TEMPERO", "FILTRO FREIDORAS FRYMASTER", "FILTRO FREIDORAS HENNY PENNY", "GALLETITA OREO CAJA X36 X 117 GR", "GUANTES VINILO M", "HARINA X 11.389KG", "JUGO DE LIMON INDIVIDUAL", "KETCHUP INDIVIDUAL", "LAMINA ANTIGRASA SANDWICH KFC X1500", "LECHE EN POLVO CAJAX10KG", "MANTECOL", "MANTELITO KFC", "MAYONESA INDIVIDUAL", "MEZCLA HUEVO/LECHE", "MOSTAZA CON MIEL", "MOSTAZA CON MIEL INDIVIDUAL", "MOSTAZA INDIVIDUAL", "PAÑO BLANCO X 300 UN", "PAÑO AZUL", "PAÑO ROJO", "PAPEL ANTIGRASA BLANCO", "PAPEL ANTIGRASA GENERICO CAJA X 4000", "PAPEL ANTIGRASA SANDWICH KFC 2", "PAPEL DE MANOS (TO)", "PAPEL FILM (ROLLO)", "PAPEL HIGIENICO", "PAPEL SILICONADO X 500 UND", "PORTAVASOS KFC X 200 UND", "REVOLVEDOR CAFE MADERA", "ROLLO IMPRESORA FISCAL GENERICO 2", "SAL A GRANEL", "SAL SOBRE INDIVIDUAL KFC", "SALSA BARBACOA A GRANEL", "SALSA BARBACOA INDIVIDUAL", "SALSA PICANTE A GRANEL", "SALSA PICANTE INDIVIDUAL", "SEASONING OR", "SERVILLETAS 30X30 X 5000 UND", "SERVILletas PARA CONO", "SOBRE KFC X 1000 UND", "STICKER REDONDO AMARILLO", "STICKER REDONDO AZUL", "STICKER REDONDO NARANJA", "STICKER REDONDO NEGRO", "STICKER REDONDO ROJO", "STICKER REDONDO VERDE", "STICKER VENCIMIENTO", "SUNDAE KFC 7.25 OZ X 2000 UND", "TAPA BUCKET KFC X 2150 UND", "TAPA CAJA BIG BOX", "TAPA DIPPER", "TAPA VASO CAFE 8 Y 12 OZ X 2000 UND", "TAPA VASO GASEOSA 16OZ", "TAPA VASO GASEOSA 12OZ", "TE INTIZEN ILUMINE (ROJO)", "TENEDOR", "QUESO CHEDDAR EN POLVO", "VASO AVALANCHA KFC X 1200 UND", "VASO CAFE 8 OZ KFC", "VASO CORTESIA KFC", "VASO GASEOSA 12OZ KFC A", "VASO GASEOSA 16OZ KFC A", "VASO GASEOSA 21OZ KFC", "VASO CAFE 12 OZ KFC X 1000", "HELADO DULCE DE LECHE", "HELADO VAINILLA", "JARABE DE FRUTILLA", "SALSA DE CHOCOLATE", "SALSA DE DULCE DE LECHE X 5KG", "QUESO CHEDDAR EN FETAS 2", "LOMITO EN FETAS", "PANCETA KFC", "MANTECA X 6KG", "MAYONESA A GRANEL", "MIXDE ENSALADA", "TOMATE", "PAN PORTENO", "PANAL MEMBRILLO X 72 UND", "REJILLA PASTELERA X 72 UND", "MEDIALUNA DE GRASA X 240 UND", "MEDIALUNA DE MANTECA X 180 UND", "HELADO CONG SUNDAE CHOC", "HELADO CONGELADO SUNDAE DDL", "HELADO CONGELADO AVALANCHA KFC", "PAPAS FRITAS KFC C7 X 18 KG", "AROS DE CEBOLLA X 10KG"];
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
+        const initialItemsList = ["ACEITE FRITURA", "ALMIBAR PARA FACTURA X 7 KG", "AZUCAR INDIVIDUAL KFC", "BANDEJA CANOA KFC", "BOLSA DE LLEVAR GRANDE KFC2", "BOLSA DE RESIDUOS CHICA", "BOLSA DE RESIDUOS NEGRA X 250 UND", "BOLSA DE RESIDUOS TRANSPARENTE", "BOLSA PARA MARINADO K EN ROLLOS", "BOLSA SIN MANIJA GRANDE KFC X 250 UND", "BUCKET 130OZ KFC X 300UN", "BUCKET 50OZ X 420 UND", "BUCKET 85OZ X 330 UND", "CAFE EN POLVO", "CAJA BIG BOXKFC", "CAJA SNACK CON TAPA KFC X 800 UND", "CANDADITOS KFC", "CHOCOLATE CON MANI X 4.32KG", "CHOCOLATE EN POLVO X 4KG", "CINTA DE SEGURIDAD KFC X 36 UND", "COFIA DE FISELINA DESCARTABLE", "CONO HELADO", "CUCHARITA PARA HELADO X 1000 UND", "CUCHILLO", "EDULCORANTE INDIVIDUAL KFC", "ESTUCHE PAPA CHICA KFC X 800 UND", "ESTUCHE PAPAS GRANDES KFC", "ESTUCHE PAPAS MEDIANAS KFC", "ESTUCHE POPCORN GRANDE", "ESTUCHE POPCORN MEDIANO", "ETC TEMPERO", "FILTRO FREIDORAS FRYMASTER", "FILTRO FREIDORAS HENNY PENNY", "GALLETITA OREO CAJA X36 X 117 GR", "GUANTES VINILO M", "HARINA X 11.389KG", "JUGO DE LIMON INDIVIDUAL", "KETCHUP INDIVIDUAL", "LAMINA ANTIGRASA SANDWICH KFC X1500", "LECHE EN POLVO CAJAX10KG", "MANTECOL", "MANTELITO KFC", "MAYONESA INDIVIDUAL", "MEZCLA HUEVO/LECHE", "MOSTAZA CON MIEL", "MOSTAZA CON MIEL INDIVIDUAL", "MOSTAZA INDIVIDUAL", "PAÑO BLANCO X 300 UN", "PAÑO AZUL", "PAÑO ROJO", "PAPEL ANTIGRASA BLANCO", "PAPEL ANTIGRASA GENERICO CAJA X 4000", "PAPEL ANTIGRASA SANDWICH KFC 2", "PAPEL DE MANOS (TO)", "PAPEL FILM (ROLLO)", "PAPEL HIGIENICO", "PAPEL SILICONADO X 500 UND", "PORTAVASOS KFC X 200 UND", "REVOLVEDOR CAFE MADERA", "ROLLO IMPRESORA FISCAL GENERICO 2", "SAL A GRANEL", "SAL SOBRE INDIVIDUAL KFC", "SALSA BARBACOA A GRANEL", "SALSA BARBACOA INDIVIDUAL", "SALSA PICANTE A GRANEL", "SALSA PICANTE INDIVIDUAL", "SEASONING OR", "SERVILLETAS 30X30 X 5000 UND", "SERVILletas PARA CONO", "SOBRE KFC X 1000 UND", "STICKER REDONDO AMARILLO", "STICKER REDONDO AZUL", "STICKER REDONDO NARANJA", "STICKER REDONDO NEGRO", "STICKER REDONDO ROJO", "STICKER REDONDO VERDE", "STICKER VENCIMIENTO", "SUNDAE KFC 7.25 OZ X 2000 UND", "TAPA BUCKET KFC X 2150 UND", "TAPA CAJA BIG BOX", "TAPA DIPPER", "TAPA VASO CAFE 8 Y 12 OZ X 2000 UND", "TAPA VASO GASEOSA 16OZ", "TAPA VASO GASEOSA 12OZ", "TE INTIZEN ILUMINE (ROJO)", "TENEDOR", "QUESO CHEDDAR EN POLVO", "VASO AVALANCHA KFC X 1200 UND", "VASO CAFE 8 OZ KFC", "VASO CORTESIA KFC", "VASO GASEOSA 12OZ KFC A", "VASO GASEOSA 16OZ KFC A", "VASO GASEOSA 21OZ KFC", "VASO CAFE 12 OZ KFC X 1000", "HELADO DULCE DE LECHE", "HELADO VAINILLA", "JARABE DE FRUTILLA", "SALSA DE CHOCOLATE", "SALSA DE DULCE DE LECHE X 5KG", "QUESO CHEDDAR EN FETAS 2", "LOMITO EN FETAS", "PANCETA KFC", "MANTECA X 6KG", "MAYONESA A GRANEL", "MIXDE ENSALADA", "TOMATE", "PAN PORTENO", "PANAL MEMBRILLO X 72 UND", "REJILLA PASTELERA X 72 UND", "MEDIALUNA DE GRASA X 240 UND", "MEDIALUNA DE MANTECA X 180 UND", "HELADO CONG SUNDAE CHOC", "HELADO CONGELADO SUNDAE DDL", "HELADO CONGELADO AVALANCHA KFC", "PAPAS FRITAS KFC C7 X 18 KG", "AROS DE CEBOLLA X 10KG"];
+        
         let state = {
             currentInventory: null,
             currentOrder: null,
@@ -222,10 +335,17 @@
         let currentIndex = 0;
         let appMode = 'inventory';
         let tempBaseInventoryIndex = -1;
+        let editingId = null;
+        let userId = null;
+        let unsubscribe = {};
+        let isLoginMode = true;
 
         const allViews = document.querySelectorAll('.view');
         const navButtons = document.getElementById('nav-buttons');
         const el = {
+            loadingView: document.getElementById('loading-view'),
+            loginView: document.getElementById('login-view'),
+            mainContent: document.getElementById('main-content'),
             mainMenu: document.getElementById('main-menu-view'),
             setup: document.getElementById('setup-view'),
             item: document.getElementById('item-view'),
@@ -239,10 +359,15 @@
             setupOrder: document.getElementById('setup-order-view'),
             orderItem: document.getElementById('order-item-view'),
             orderSummary: document.getElementById('order-summary-view'),
+            editOrder: document.getElementById('edit-order-view'),
+            editInventory: document.getElementById('edit-inventory-view'),
+            consumptionSetup: document.getElementById('consumption-setup-view'),
+            consumptionResult: document.getElementById('consumption-result-view'),
             continueInventoryBtn: document.getElementById('continue-inventory-btn'),
             continueOrderBtn: document.getElementById('continue-order-btn'),
             startNewInventoryBtn: document.getElementById('start-new-inventory-btn'),
             makeOrderBtn: document.getElementById('make-order-btn'),
+            consumptionReportBtn: document.getElementById('consumption-report-btn'),
             historyBtn: document.getElementById('history-btn'),
             manageItemsBtn: document.getElementById('manage-items-btn'),
             inventoryDate: document.getElementById('inventory-date'),
@@ -255,6 +380,7 @@
             skipBtn: document.getElementById('skip-btn'),
             nextBtn: document.getElementById('next-btn'),
             summaryList: document.getElementById('summary-list'),
+            inventorySummarySearch: document.getElementById('inventory-summary-search'),
             backToCountBtn: document.getElementById('back-to-count-btn'),
             historyList: document.getElementById('history-list'),
             backToMenuFromHistoryBtn: document.getElementById('back-to-menu-from-history-btn'),
@@ -263,6 +389,7 @@
             historyDetailPdfBtn: document.getElementById('history-detail-pdf-btn'),
             backToHistoryBtn: document.getElementById('back-to-history-btn'),
             manageItemsList: document.getElementById('manage-items-list'),
+            manageItemsSearch: document.getElementById('manage-items-search'),
             newItemName: document.getElementById('new-item-name'),
             addItemBtn: document.getElementById('add-item-btn'),
             backToMenuFromManageBtn: document.getElementById('back-to-menu-from-manage-btn'),
@@ -274,6 +401,11 @@
             globalPdfBtn: document.getElementById('download-pdf-btn'),
             globalMainMenuBtn: document.getElementById('main-menu-btn'),
             toast: document.getElementById('toast-notification'),
+            confirmDeleteModal: document.getElementById('confirm-delete-modal'),
+            confirmDeleteTitle: document.getElementById('confirm-delete-title'),
+            confirmDeleteMessage: document.getElementById('confirm-delete-message'),
+            cancelDeleteBtn: document.getElementById('cancel-delete-btn'),
+            confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
             selectInventoryList: document.getElementById('select-inventory-list'),
             backToMenuFromSelectInvBtn: document.getElementById('back-to-menu-from-select-inv-btn'),
             orderForDate: document.getElementById('order-for-date'),
@@ -288,23 +420,87 @@
             orderNextBtn: document.getElementById('order-next-btn'),
             orderSummaryTitle: document.getElementById('order-summary-title'),
             orderSummaryList: document.getElementById('order-summary-list'),
+            orderSummarySearch: document.getElementById('order-summary-search'),
             backToOrderBtn: document.getElementById('back-to-order-btn'),
+            editOrderTitle: document.getElementById('edit-order-title'),
+            editOrderList: document.getElementById('edit-order-list'),
+            backToHistoryFromEditBtn: document.getElementById('back-to-history-from-edit-btn'),
+            saveEditedOrderBtn: document.getElementById('save-edited-order-btn'),
+            editInventoryTitle: document.getElementById('edit-inventory-title'),
+            editInventoryList: document.getElementById('edit-inventory-list'),
+            backToHistoryFromEditInvBtn: document.getElementById('back-to-history-from-edit-inv-btn'),
+            saveEditedInventoryBtn: document.getElementById('save-edited-inventory-btn'),
+            backToMenuFromConsumptionBtn: document.getElementById('back-to-menu-from-consumption-btn'),
+            startInventorySelect: document.getElementById('start-inventory-select'),
+            endInventorySelect: document.getElementById('end-inventory-select'),
+            generateConsumptionReportBtn: document.getElementById('generate-consumption-report-btn'),
+            consumptionResultList: document.getElementById('consumption-result-list'),
+            backToConsumptionSetupBtn: document.getElementById('back-to-consumption-setup-btn'),
+            logoutBtn: document.getElementById('logout-btn'),
+            userEmail: document.getElementById('user-email'),
+            loginError: document.getElementById('login-error-message'),
+            authTitle: document.getElementById('auth-title'),
+            emailInput: document.getElementById('email-input'),
+            passwordInput: document.getElementById('password-input'),
+            authActionBtn: document.getElementById('auth-action-btn'),
+            authToggleText: document.getElementById('auth-toggle-text'),
+            authToggleBtn: document.getElementById('auth-toggle-btn'),
         };
 
-        function saveState() {
-            localStorage.setItem(KEYS.CURRENT_INV, JSON.stringify(state.currentInventory));
-            localStorage.setItem(KEYS.CURRENT_ORDER, JSON.stringify(state.currentOrder));
-            localStorage.setItem(KEYS.HISTORY, JSON.stringify(state.history));
-            localStorage.setItem(KEYS.ITEMS, JSON.stringify(state.masterItems));
-        }
+        const refs = {
+            masterItems: () => doc(db, 'users', userId, 'data', 'masterItems'),
+            currentInventory: () => doc(db, 'users', userId, 'data', 'currentInventory'),
+            currentOrder: () => doc(db, 'users', userId, 'data', 'currentOrder'),
+            history: () => collection(db, 'users', userId, 'history'),
+            historyDoc: (id) => doc(db, 'users', userId, 'history', String(id))
+        };
 
-        function loadState() {
-            state.currentInventory = JSON.parse(localStorage.getItem(KEYS.CURRENT_INV));
-            state.currentOrder = JSON.parse(localStorage.getItem(KEYS.CURRENT_ORDER));
-            state.history = JSON.parse(localStorage.getItem(KEYS.HISTORY)) || [];
-            state.masterItems = JSON.parse(localStorage.getItem(KEYS.ITEMS)) || initialItemsList;
-        }
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                userId = user.uid;
+                el.userEmail.textContent = user.email || 'Usuario Anónimo';
+                Object.values(unsubscribe).forEach(unsub => unsub());
+                
+                unsubscribe.masterItems = onSnapshot(refs.masterItems(), (docSnap) => {
+                    if (docSnap.exists()) {
+                        state.masterItems = docSnap.data().items;
+                    } else {
+                        setDoc(refs.masterItems(), { items: initialItemsList });
+                    }
+                });
 
+                unsubscribe.currentInventory = onSnapshot(refs.currentInventory(), (docSnap) => {
+                    state.currentInventory = docSnap.exists() ? docSnap.data() : null;
+                    el.continueInventoryBtn.style.display = state.currentInventory ? 'block' : 'none';
+                });
+
+                unsubscribe.currentOrder = onSnapshot(refs.currentOrder(), (docSnap) => {
+                    state.currentOrder = docSnap.exists() ? docSnap.data() : null;
+                    el.continueOrderBtn.style.display = state.currentOrder ? 'block' : 'none';
+                });
+
+                const q = query(refs.history(), orderBy('date', 'desc'));
+                unsubscribe.history = onSnapshot(q, (querySnapshot) => {
+                    state.history = [];
+                    querySnapshot.forEach((doc) => {
+                        state.history.push({ id: doc.id, ...doc.data() });
+                    });
+                });
+
+                el.loadingView.classList.add('hidden');
+                el.loginView.classList.add('hidden');
+                el.mainContent.classList.remove('hidden');
+                switchView(el.mainMenu);
+
+            } else {
+                userId = null;
+                Object.values(unsubscribe).forEach(unsub => unsub());
+                el.loadingView.classList.add('hidden');
+                el.mainContent.classList.add('hidden');
+                el.loginView.classList.remove('hidden');
+            }
+        });
+        
         function switchView(viewToShow) {
             allViews.forEach(v => v.classList.add('hidden'));
             viewToShow.classList.remove('hidden');
@@ -344,7 +540,7 @@
             }
         }
 
-        function advanceToNextItem(mode) {
+        async function advanceToNextItem(mode) {
             positionInQueue++;
             const process = mode === 'order' ? state.currentOrder : state.currentInventory;
             const quantityKey = mode === 'order' ? 'toOrder' : 'quantity';
@@ -371,7 +567,7 @@
                 currentIndex = itemsToCountQueue[positionInQueue];
                 renderCurrentItem(mode);
             }
-            saveState();
+            await setDoc(mode === 'order' ? refs.currentOrder() : refs.currentInventory(), process);
         }
 
         function handleDownloadPdf(entry, type) {
@@ -380,12 +576,12 @@
             if (!entry || !entry.items) return alert('No hay datos para generar el PDF.');
 
             if (type === 'order') {
-                const tableData = entry.items.filter(item => item.toOrder !== null).map(item => [item.name, item.stock, item.toOrder]);
+                const tableData = entry.items.filter(item => item.toOrder !== null).map(item => [item.name, item.stock, item.toOrder, item.received ?? item.toOrder]);
                 if (tableData.length === 0) return alert('No hay items en el pedido para generar el PDF.');
                 const orderForDate = new Date(entry.orderForDate);
                 orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
                 doc.text(`Pedido para el día: ${orderForDate.toLocaleDateString('es-AR')}`, 14, 22);
-                doc.autoTable({ head: [['Ítem', 'Stock Actual', 'Cantidad a Pedir']], body: tableData, startY: 35 });
+                doc.autoTable({ head: [['Ítem', 'Stock', 'Pedido', 'Recibido']], body: tableData, startY: 35 });
             } else {
                 const countedItems = entry.items.filter(item => item.quantity !== null);
                 if (countedItems.length === 0) return alert('No hay items con cantidad para generar el PDF.');
@@ -400,10 +596,16 @@
             doc.save(`documento_${dateStr}.pdf`);
         }
 
-        function renderSummaryList() {
+        function renderSummaryList(searchTerm = '') {
             el.summaryList.innerHTML = '';
             if (!state.currentInventory || !state.currentInventory.items) return;
-            state.currentInventory.items.forEach((item, index) => {
+            
+            const filteredItems = state.currentInventory.items.filter(item => 
+                item.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            filteredItems.forEach((item) => {
+                const index = state.currentInventory.items.indexOf(item);
                 const isNA = item.quantity === 'N/A';
                 const listItem = document.createElement('div');
                 listItem.className = 'flex items-center justify-between bg-gray-700 p-3 rounded-lg';
@@ -426,7 +628,7 @@
                     const rawValue = e.target.value.replace(',', '.');
                     const quantity = rawValue !== '' ? parseFloat(rawValue) : null;
                     state.currentInventory.items[idx].quantity = (quantity !== null && !isNaN(quantity)) ? quantity : null;
-                    saveState();
+                    setDoc(refs.currentInventory(), state.currentInventory);
                 });
                 controlsWrapper.appendChild(itemInput);
                 if (isNA) {
@@ -438,8 +640,8 @@
                     undoBtn.addEventListener('click', (e) => {
                         const idx = parseInt(e.currentTarget.dataset.index, 10);
                         state.currentInventory.items[idx].quantity = null;
-                        saveState();
-                        renderSummaryList();
+                        setDoc(refs.currentInventory(), state.currentInventory);
+                        renderSummaryList(el.inventorySummarySearch.value);
                     });
                     controlsWrapper.appendChild(undoBtn);
                 }
@@ -451,7 +653,7 @@
         function renderHistoryList(forSelection) {
             const listElement = forSelection ? el.selectInventoryList : el.historyList;
             listElement.innerHTML = '';
-            const inventories = state.history.filter(h => h.type === 'inventory');
+            const inventories = state.history.filter(h => h.type === 'inventory').sort((a,b) => new Date(b.date) - new Date(a.date));
 
             if (inventories.length === 0) {
                 listElement.innerHTML = `<p class="text-gray-400 text-center">No hay ${forSelection ? 'inventarios' : 'registros'} guardados.</p>`;
@@ -468,11 +670,18 @@
                 const inventoryDate = new Date(inv.date);
                 inventoryDate.setMinutes(inventoryDate.getMinutes() + inventoryDate.getTimezoneOffset());
                 
+                const buttonsHTML = forSelection 
+                    ? `<button data-id="${inv.id}" class="select-inv-btn bg-green-600 px-3 py-1 rounded-lg text-sm z-10">Seleccionar</button>`
+                    : `<div class="flex gap-2 z-10">
+                           <button data-id="${inv.id}" class="edit-inventory-btn bg-yellow-600 px-3 py-1 rounded-lg text-xs">Editar</button>
+                           <button data-id="${inv.id}" class="delete-inventory-btn bg-red-600 px-3 py-1 rounded-lg text-xs">Borrar</button>
+                       </div>`;
+
                 summary.innerHTML = `
                     <div>
                         <p class="font-bold">${inventoryDate.toLocaleDateString('es-AR')} <span class="text-sm font-normal text-indigo-400">(${inv.timeOfDay})</span></p>
                     </div>
-                    <button data-id="${inv.id}" class="${forSelection ? 'select-inv-btn bg-green-600' : 'history-details-btn bg-indigo-600'} px-3 py-1 rounded-lg text-sm z-10">${forSelection ? 'Seleccionar' : 'Ver Detalles'}</button>
+                    ${buttonsHTML}
                 `;
                 details.appendChild(summary);
 
@@ -489,12 +698,15 @@
                         orderDiv.className = 'mt-2 p-2 bg-gray-800 rounded-md flex justify-between items-center';
                         orderDiv.innerHTML = `
                             <p class="text-sm">Pedido para: <span class="font-semibold">${orderDate.toLocaleDateString('es-AR')}</span></p>
-                            <button data-id="${order.id}" class="history-details-btn bg-blue-600 px-3 py-1 rounded-lg text-xs">Ver Pedido</button>
+                            <div class="flex gap-2">
+                                <button data-id="${order.id}" class="history-details-btn bg-blue-600 px-3 py-1 rounded-lg text-xs">Ver</button>
+                                <button data-id="${order.id}" class="edit-order-btn bg-yellow-600 px-3 py-1 rounded-lg text-xs">Editar</button>
+                            </div>
                         `;
                         ordersContainer.appendChild(orderDiv);
                     });
                 } else {
-                    ordersContainer.innerHTML = '<p class="text-sm text-gray-400 mt-2">Pedido no realizado</p>';
+                    ordersContainer.innerHTML = '<p class="text-sm text-gray-400 mt-2">No hay pedidos para este inventario.</p>';
                 }
                 details.appendChild(ordersContainer);
                 listElement.appendChild(details);
@@ -519,6 +731,40 @@
                         renderHistoryDetailList(entryIndex);
                         switchView(el.historyDetail);
                     }
+                });
+            });
+
+            listElement.querySelectorAll('.edit-order-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    renderEditOrderView(e.target.dataset.id);
+                });
+            });
+
+            listElement.querySelectorAll('.edit-inventory-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    renderEditInventoryView(e.target.dataset.id);
+                });
+            });
+
+            listElement.querySelectorAll('.delete-inventory-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const invId = Number(e.target.dataset.id);
+                    el.confirmDeleteTitle.textContent = '¿Eliminar Inventario?';
+                    el.confirmDeleteMessage.textContent = 'Se eliminará este inventario y todos sus pedidos asociados. Esta acción es irreversible.';
+                    el.confirmDeleteModal.classList.remove('hidden');
+                    el.confirmDeleteBtn.onclick = async () => {
+                        const batch = writeBatch(db);
+                        const relatedOrders = state.history.filter(h => h.baseInventoryId === invId);
+                        relatedOrders.forEach(order => batch.delete(refs.historyDoc(order.id)));
+                        batch.delete(refs.historyDoc(invId));
+                        await batch.commit();
+                        
+                        el.confirmDeleteModal.classList.add('hidden');
+                        showToast('Inventario eliminado.');
+                    };
                 });
             });
         }
@@ -547,7 +793,7 @@
 
             let header;
             if (isOrder) {
-                header = `<div class="grid grid-cols-3 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600"><span>Ítem</span><span class="text-right">Stock</span><span class="text-right">Pedido</span></div>`;
+                header = `<div class="grid grid-cols-4 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600"><span>Ítem</span><span class="text-right">Stock</span><span class="text-right">Pedido</span><span class="text-right">Recibido</span></div>`;
             } else {
                 header = `<div class="grid grid-cols-2 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600"><span>Ítem</span><span class="text-right">Cantidad</span></div>`;
             }
@@ -558,8 +804,11 @@
                 if (quantity !== null) {
                     const listItem = document.createElement('div');
                     if(isOrder) {
-                        listItem.className = 'grid grid-cols-3 gap-2 bg-gray-700 p-3 rounded-lg';
-                        listItem.innerHTML = `<span>${item.name}</span><span class="text-right font-semibold">${item.stock ?? 'N/A'}</span><span class="text-right font-semibold">${quantity}</span>`;
+                        listItem.className = 'grid grid-cols-4 gap-2 bg-gray-700 p-3 rounded-lg';
+                        listItem.innerHTML = `<span>${item.name}</span>
+                                              <span class="text-right font-semibold">${item.stock ?? 'N/A'}</span>
+                                              <span class="text-right font-semibold">${quantity}</span>
+                                              <span class="text-right font-semibold text-green-400">${item.received ?? quantity}</span>`;
                     } else {
                         listItem.className = 'grid grid-cols-2 gap-2 bg-gray-700 p-3 rounded-lg';
                         listItem.innerHTML = `<span>${item.name}</span><span class="text-right font-semibold">${quantity}</span>`;
@@ -570,7 +819,7 @@
             el.historyDetailPdfBtn.onclick = () => handleDownloadPdf(entry, isOrder ? 'order' : 'inventory');
         }
         
-        function renderOrderSummaryList() {
+        function renderOrderSummaryList(searchTerm = '') {
             el.orderSummaryList.innerHTML = '';
             if (!state.currentOrder) return;
 
@@ -578,7 +827,12 @@
             orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
             el.orderSummaryTitle.textContent = `Pedido para: ${orderForDate.toLocaleDateString('es-AR')}`;
 
-            state.currentOrder.items.forEach((item, index) => {
+            const filteredItems = state.currentOrder.items.filter(item => 
+                item.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            filteredItems.forEach((item) => {
+                const index = state.currentOrder.items.indexOf(item);
                 const isNoPedir = item.toOrder === 'NO PEDIR';
                 const listItem = document.createElement('div');
                 listItem.className = 'flex items-center justify-between bg-gray-700 p-3 rounded-lg';
@@ -609,7 +863,7 @@
                     const rawValue = e.target.value.replace(',', '.');
                     const quantity = rawValue !== '' ? parseFloat(rawValue) : null;
                     state.currentOrder.items[idx].toOrder = (quantity !== null && !isNaN(quantity)) ? quantity : null;
-                    saveState();
+                    setDoc(refs.currentOrder(), state.currentOrder);
                 });
                 controlsWrapper.appendChild(itemInput);
 
@@ -622,8 +876,8 @@
                     undoBtn.addEventListener('click', (e) => {
                         const idx = parseInt(e.currentTarget.dataset.index, 10);
                         state.currentOrder.items[idx].toOrder = null;
-                        saveState();
-                        renderOrderSummaryList();
+                        setDoc(refs.currentOrder(), state.currentOrder);
+                        renderOrderSummaryList(el.orderSummarySearch.value);
                     });
                     itemInput.remove();
                     controlsWrapper.appendChild(undoBtn);
@@ -633,9 +887,64 @@
             });
         }
 
-        function renderManageItemsList() {
+        function renderEditOrderView(orderId) {
+            editingId = orderId;
+            const order = state.history.find(h => h.id == orderId);
+            if (!order) return;
+
+            const orderForDate = new Date(order.orderForDate);
+            orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
+            el.editOrderTitle.textContent = `Editar Pedido para: ${orderForDate.toLocaleDateString('es-AR')}`;
+            el.editOrderList.innerHTML = '';
+
+            const header = `<div class="grid grid-cols-3 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600"><span>Ítem</span><span class="text-right">Pedido</span><span class="text-right">Recibido</span></div>`;
+            el.editOrderList.innerHTML = header;
+
+            order.items.forEach((item, index) => {
+                if (item.toOrder !== null && item.toOrder !== 'NO PEDIR') {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'grid grid-cols-3 gap-2 items-center bg-gray-700 p-3 rounded-lg';
+                    listItem.innerHTML = `
+                        <span>${item.name}</span>
+                        <div class="text-right bg-gray-600 p-2 rounded-md">${item.toOrder}</div>
+                        <input type="number" step="0.01" value="${item.received ?? item.toOrder}" data-index="${index}" class="w-full bg-gray-600 text-white text-center p-2 rounded-md border border-gray-500">
+                    `;
+                    el.editOrderList.appendChild(listItem);
+                }
+            });
+            switchView(el.editOrder);
+        }
+
+        function renderEditInventoryView(invId) {
+            editingId = invId;
+            const inv = state.history.find(h => h.id == invId);
+            if (!inv) return;
+
+            const invDate = new Date(inv.date);
+            invDate.setMinutes(invDate.getMinutes() + invDate.getTimezoneOffset());
+            el.editInventoryTitle.textContent = `Editar: ${invDate.toLocaleDateString('es-AR')} (${inv.timeOfDay})`;
+            el.editInventoryList.innerHTML = '';
+
+            inv.items.forEach((item, index) => {
+                const listItem = document.createElement('div');
+                listItem.className = 'flex items-center justify-between bg-gray-700 p-3 rounded-lg';
+                listItem.innerHTML = `
+                    <span class="flex-1 mr-4">${item.name}</span>
+                    <input type="number" step="0.01" value="${item.quantity ?? ''}" placeholder="${item.quantity === 'N/A' ? 'N/A' : '---'}" data-index="${index}" class="w-24 bg-gray-600 text-white text-center p-2 rounded-md border border-gray-500">
+                `;
+                el.editInventoryList.appendChild(listItem);
+            });
+            switchView(el.editInventory);
+        }
+
+        function renderManageItemsList(searchTerm = '') {
             el.manageItemsList.innerHTML = '';
-            state.masterItems.forEach((name, index) => {
+            const filteredItems = state.masterItems.filter(name => 
+                name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            filteredItems.forEach((name) => {
+                const index = state.masterItems.indexOf(name);
                 const listItem = document.createElement('div');
                 listItem.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center';
                 listItem.innerHTML = `<span>${name}</span><button data-index="${index}" class="delete-item-btn bg-red-600 px-3 py-1 rounded-lg text-sm font-bold">&times;</button>`;
@@ -646,21 +955,95 @@
                     if (confirm('¿Seguro?')) {
                         const idx = parseInt(e.target.dataset.index, 10);
                         state.masterItems.splice(idx, 1);
-                        saveState();
-                        renderManageItemsList();
+                        setDoc(refs.masterItems(), { items: state.masterItems });
+                        renderManageItemsList(el.manageItemsSearch.value);
                     }
                 });
             });
         }
 
+        function renderConsumptionSetup() {
+            const inventories = state.history.filter(h => h.type === 'inventory').sort((a,b) => new Date(a.date) - new Date(b.date));
+            el.startInventorySelect.innerHTML = '';
+            el.endInventorySelect.innerHTML = '';
+            inventories.forEach(inv => {
+                const date = new Date(inv.date);
+                date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                const option = `<option value="${inv.id}">${date.toLocaleDateString('es-AR')} - ${inv.timeOfDay}</option>`;
+                el.startInventorySelect.innerHTML += option;
+                el.endInventorySelect.innerHTML += option;
+            });
+            switchView(el.consumptionSetup);
+        }
+
+        function renderConsumptionReport() {
+            const startId = el.startInventorySelect.value;
+            const endId = el.endInventorySelect.value;
+            if (!startId || !endId || startId >= endId) {
+                alert('Asegúrate de seleccionar un inventario inicial y final válidos. La fecha inicial debe ser anterior a la final.');
+                return;
+            }
+            const startInv = state.history.find(h => h.id == startId);
+            const endInv = state.history.find(h => h.id == endId);
+            
+            const startDate = new Date(startInv.date);
+            const endDate = new Date(endInv.date);
+            
+            const receivedOrders = state.history.filter(h => 
+                h.type === 'order' &&
+                new Date(h.orderForDate) > startDate &&
+                new Date(h.orderForDate) <= endDate
+            );
+
+            el.consumptionResultList.innerHTML = '';
+            const header = `<div class="grid grid-cols-5 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600 text-sm sticky-header">
+                                <span class="col-span-2">Ítem</span>
+                                <span class="text-right">Inicial</span>
+                                <span class="text-right">Recibido</span>
+                                <span class="text-right">Final</span>
+                                <span class="text-right">Consumo</span>
+                           </div>`;
+            el.consumptionResultList.innerHTML = header;
+
+            state.masterItems.forEach(itemName => {
+                const startItem = startInv.items.find(i => i.name === itemName);
+                const endItem = endInv.items.find(i => i.name === itemName);
+
+                const startStock = parseFloat(startItem?.quantity) || 0;
+                const endStock = parseFloat(endItem?.quantity) || 0;
+
+                let receivedStock = 0;
+                receivedOrders.forEach(order => {
+                    const orderItem = order.items.find(i => i.name === itemName);
+                    if (orderItem) {
+                        const quantityToAdd = typeof orderItem.received === 'number' ? orderItem.received : (typeof orderItem.toOrder === 'number' ? orderItem.toOrder : 0);
+                        receivedStock += quantityToAdd;
+                    }
+                });
+
+                const consumption = (startStock + receivedStock) - endStock;
+
+                if (startStock > 0 || endStock > 0 || receivedStock > 0 || consumption !== 0) {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'grid grid-cols-5 gap-2 bg-gray-700 p-3 rounded-lg text-sm';
+                    listItem.innerHTML = `<span class="col-span-2">${itemName}</span>
+                                          <span class="text-right">${startStock}</span>
+                                          <span class="text-right text-green-400">+${receivedStock}</span>
+                                          <span class="text-right">${endStock}</span>
+                                          <span class="text-right font-bold text-orange-400">${consumption.toFixed(2)}</span>`;
+                    el.consumptionResultList.appendChild(listItem);
+                }
+            });
+            switchView(el.consumptionResult);
+        }
+
+
         function initialize() {
-            loadState();
-            el.continueInventoryBtn.style.display = state.currentInventory ? 'block' : 'none';
-            el.continueOrderBtn.style.display = state.currentOrder ? 'block' : 'none';
+            // No need to call loadState here, onSnapshot will populate the state
             switchView(el.mainMenu);
         }
 
-        function handleInventoryNext() {
+        async function handleInventoryNext() {
             const rawValue = el.itemQuantity.value.replace(',', '.');
             const quantity = rawValue !== '' ? parseFloat(rawValue) : null;
             if (state.currentInventory && state.currentInventory.items[currentIndex]) {
@@ -669,7 +1052,7 @@
             advanceToNextItem('inventory');
         }
 
-        function handleOrderNext() {
+        async function handleOrderNext() {
             const rawValue = el.orderItemQuantity.value.replace(',', '.');
             const quantity = rawValue !== '' ? parseFloat(rawValue) : null;
             if (state.currentOrder && state.currentOrder.items[currentIndex]) {
@@ -717,10 +1100,11 @@
             switchView(el.selectInventory);
         });
         
+        el.consumptionReportBtn.addEventListener('click', () => renderConsumptionSetup());
         el.historyBtn.addEventListener('click', () => { renderHistoryList(false); switchView(el.history); });
         el.manageItemsBtn.addEventListener('click', () => { renderManageItemsList(); switchView(el.manageItems); });
 
-        el.startCountingBtn.addEventListener('click', () => {
+        el.startCountingBtn.addEventListener('click', async () => {
             state.currentInventory = {
                 id: Date.now(),
                 type: 'inventory',
@@ -731,25 +1115,25 @@
             itemsToCountQueue = state.currentInventory.items.map((_, index) => index);
             positionInQueue = 0;
             currentIndex = itemsToCountQueue[0];
-            saveState();
+            await setDoc(refs.currentInventory(), state.currentInventory);
             switchView(el.item);
             renderCurrentItem('inventory');
         });
 
-        el.startOrderingBtn.addEventListener('click', () => {
+        el.startOrderingBtn.addEventListener('click', async () => {
             const baseInv = state.history[tempBaseInventoryIndex];
             state.currentOrder = {
                 id: Date.now(),
                 type: 'order',
                 orderForDate: el.orderForDate.value,
                 baseInventoryId: baseInv.id,
-                items: baseInv.items.map(item => ({ name: item.name, stock: item.quantity, toOrder: null }))
+                items: baseInv.items.map(item => ({ name: item.name, stock: item.quantity, toOrder: null, received: null }))
             };
             appMode = 'order';
             itemsToCountQueue = state.currentOrder.items.map((_, i) => i);
             positionInQueue = 0;
             currentIndex = itemsToCountQueue[0];
-            saveState();
+            await setDoc(refs.currentOrder(), state.currentOrder);
             switchView(el.orderItem);
             renderCurrentItem('order');
         });
@@ -774,36 +1158,91 @@
         el.backToMenuFromManageBtn.addEventListener('click', () => switchView(el.mainMenu));
         el.backToMenuFromSelectInvBtn.addEventListener('click', () => switchView(el.mainMenu));
         el.backToSelectInvBtn.addEventListener('click', () => switchView(el.selectInventory));
+        el.backToMenuFromConsumptionBtn.addEventListener('click', () => switchView(el.mainMenu));
+        el.backToConsumptionSetupBtn.addEventListener('click', () => switchView(el.consumptionSetup));
+        el.backToHistoryFromEditBtn.addEventListener('click', () => switchView(el.history));
+        el.backToHistoryFromEditInvBtn.addEventListener('click', () => switchView(el.history));
 
         el.addItemBtn.addEventListener('click', () => {
             const newName = el.newItemName.value.trim();
             if (newName) {
                 const upperCaseName = newName.toUpperCase();
-                state.masterItems.push(upperCaseName);
+                const newMasterList = [...state.masterItems, upperCaseName];
+                setDoc(refs.masterItems(), { items: newMasterList });
+                
                 if (state.currentInventory) {
                     state.currentInventory.items.push({ name: upperCaseName, quantity: null });
+                    setDoc(refs.currentInventory(), state.currentInventory);
                 }
-                saveState();
                 renderManageItemsList();
                 el.newItemName.value = '';
                 showToast(`'${upperCaseName}' fue agregado.`);
             }
         });
 
-        el.saveAndFinishBtn.addEventListener('click', () => {
-            state.history.unshift(state.currentInventory);
-            state.currentInventory = null;
-            saveState();
-            initialize();
+        el.saveAndFinishBtn.addEventListener('click', async () => {
+            if (!state.currentInventory) return;
+            try {
+                const batch = writeBatch(db);
+                const historyDocRef = doc(refs.history(), String(state.currentInventory.id));
+                batch.set(historyDocRef, state.currentInventory);
+                batch.delete(refs.currentInventory());
+                await batch.commit();
+                showToast('Inventario guardado.');
+                switchView(el.mainMenu);
+            } catch (error) {
+                console.error("Error saving inventory:", error);
+            }
         });
         
-        el.saveOrderBtn.addEventListener('click', () => {
-            state.history.unshift(state.currentOrder);
-            state.currentOrder = null;
-            saveState();
-            initialize();
+        el.saveOrderBtn.addEventListener('click', async () => {
+            if (!state.currentOrder) return;
+            try {
+                const batch = writeBatch(db);
+                const historyDocRef = doc(refs.history(), String(state.currentOrder.id));
+                batch.set(historyDocRef, state.currentOrder);
+                batch.delete(refs.currentOrder());
+                await batch.commit();
+                showToast('Pedido guardado.');
+                switchView(el.mainMenu);
+            } catch (error) {
+                console.error("Error saving order:", error);
+            }
+        });
+
+        el.saveEditedOrderBtn.addEventListener('click', async () => {
+            const orderRef = refs.historyDoc(editingId);
+            const orderData = { ...state.history.find(h => h.id == editingId) };
+            
+            el.editOrderList.querySelectorAll('input[data-index]').forEach(input => {
+                const itemIndex = parseInt(input.dataset.index, 10);
+                const rawValue = input.value.replace(',', '.');
+                const receivedQty = rawValue !== '' ? parseFloat(rawValue) : null;
+                orderData.items[itemIndex].received = receivedQty;
+            });
+
+            await updateDoc(orderRef, { items: orderData.items });
+            showToast('Pedido actualizado!');
+            switchView(el.history);
+        });
+
+        el.saveEditedInventoryBtn.addEventListener('click', async () => {
+            const invRef = refs.historyDoc(editingId);
+            const invData = { ...state.history.find(h => h.id == editingId) };
+
+            el.editInventoryList.querySelectorAll('input[data-index]').forEach(input => {
+                const itemIndex = parseInt(input.dataset.index, 10);
+                const rawValue = input.value.replace(',', '.');
+                const qty = rawValue !== '' ? parseFloat(rawValue) : null;
+                invData.items[itemIndex].quantity = qty;
+            });
+
+            await updateDoc(invRef, { items: invData.items });
+            showToast('Inventario actualizado!');
+            switchView(el.history);
         });
         
+        el.generateConsumptionReportBtn.addEventListener('click', renderConsumptionReport);
         el.orderFinishedDownloadPdfBtn.addEventListener('click', () => handleDownloadPdf(state.currentOrder, 'order'));
         el.finalDownloadBtn.addEventListener('click', () => handleDownloadPdf(state.currentInventory, 'inventory'));
         
@@ -825,15 +1264,71 @@
             }
         });
 
-        el.globalMainMenuBtn.addEventListener('click', () => {
+        el.globalMainMenuBtn.addEventListener('click', async () => {
             if (confirm('¿Seguro? Se guardará tu progreso.')) {
-                saveState();
-                initialize();
+                if (appMode === 'inventory' && state.currentInventory) {
+                    await setDoc(refs.currentInventory(), state.currentInventory);
+                } else if (appMode === 'order' && state.currentOrder) {
+                    await setDoc(refs.currentOrder(), state.currentOrder);
+                }
+                switchView(el.mainMenu);
             }
         });
 
-        initialize();
-    });
+        el.cancelDeleteBtn.addEventListener('click', () => {
+            el.confirmDeleteModal.classList.add('hidden');
+        });
+
+        el.authToggleBtn.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            el.authTitle.textContent = isLoginMode ? 'Iniciar Sesión' : 'Registrarse';
+            el.authActionBtn.textContent = isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta';
+            el.authToggleText.textContent = isLoginMode ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?';
+            el.authToggleBtn.textContent = isLoginMode ? 'Regístrate' : 'Inicia Sesión';
+            el.loginError.textContent = '';
+        });
+
+        el.authActionBtn.addEventListener('click', () => {
+            const email = el.emailInput.value;
+            const password = el.passwordInput.value;
+            el.loginError.textContent = '';
+
+            if (!email || !password) {
+                el.loginError.textContent = 'Por favor, completa ambos campos.';
+                return;
+            }
+
+            if (isLoginMode) {
+                signInWithEmailAndPassword(auth, email, password)
+                    .catch(error => {
+                        console.error("Sign-in failed:", error);
+                        el.loginError.textContent = 'Correo o contraseña incorrectos.';
+                    });
+            } else {
+                createUserWithEmailAndPassword(auth, email, password)
+                    .catch(error => {
+                        console.error("Sign-up failed:", error);
+                        if (error.code === 'auth/email-already-in-use') {
+                            el.loginError.textContent = 'Este correo ya está registrado.';
+                        } else if (error.code === 'auth/weak-password') {
+                            el.loginError.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+                        } else {
+                            el.loginError.textContent = 'Error al crear la cuenta.';
+                        }
+                    });
+            }
+        });
+
+        el.logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // Search Listeners
+        el.inventorySummarySearch.addEventListener('input', (e) => renderSummaryList(e.target.value));
+        el.orderSummarySearch.addEventListener('input', (e) => renderOrderSummaryList(e.target.value));
+        el.manageItemsSearch.addEventListener('input', (e) => renderManageItemsList(e.target.value));
+
     </script>
+
 </body>
 </html>
