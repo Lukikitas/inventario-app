@@ -334,7 +334,7 @@
         let positionInQueue = -1;
         let currentIndex = 0;
         let appMode = 'inventory';
-        let tempBaseInventoryIndex = -1;
+        let tempBaseInventoryId = null;
         let editingId = null;
         let userId = null;
         let unsubscribe = {};
@@ -483,7 +483,7 @@
                 unsubscribe.history = onSnapshot(q, (querySnapshot) => {
                     state.history = [];
                     querySnapshot.forEach((doc) => {
-                        state.history.push({ id: doc.id, ...doc.data() });
+                        state.history.push({ ...doc.data(), id: doc.id });
                     });
                 });
 
@@ -688,7 +688,7 @@
                 const ordersContainer = document.createElement('div');
                 ordersContainer.className = 'px-3 pb-3 border-t border-gray-600';
                 
-                const relatedOrders = state.history.filter(h => h.type === 'order' && h.baseInventoryId === inv.id);
+                const relatedOrders = state.history.filter(h => h.type === 'order' && String(h.baseInventoryId) === String(inv.id));
 
                 if (relatedOrders.length > 0) {
                     relatedOrders.forEach(order => {
@@ -715,8 +715,8 @@
             listElement.querySelectorAll('.select-inv-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    tempBaseInventoryIndex = state.history.findIndex(h => h.id == e.target.dataset.id);
-                    if (tempBaseInventoryIndex !== -1) {
+                    tempBaseInventoryId = e.target.dataset.id;
+                    if (tempBaseInventoryId) {
                         el.orderForDate.value = new Date().toISOString().split('T')[0];
                         switchView(el.setupOrder);
                     }
@@ -751,13 +751,13 @@
             listElement.querySelectorAll('.delete-inventory-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const invId = Number(e.target.dataset.id);
+                    const invId = e.target.dataset.id;
                     el.confirmDeleteTitle.textContent = '¿Eliminar Inventario?';
                     el.confirmDeleteMessage.textContent = 'Se eliminará este inventario y todos sus pedidos asociados. Esta acción es irreversible.';
                     el.confirmDeleteModal.classList.remove('hidden');
                     el.confirmDeleteBtn.onclick = async () => {
                         const batch = writeBatch(db);
-                        const relatedOrders = state.history.filter(h => h.baseInventoryId === invId);
+                        const relatedOrders = state.history.filter(h => String(h.baseInventoryId) === String(invId));
                         relatedOrders.forEach(order => batch.delete(refs.historyDoc(order.id)));
                         batch.delete(refs.historyDoc(invId));
                         await batch.commit();
@@ -778,11 +778,11 @@
             let title;
             if (isOrder) {
                 const baseInv = state.history.find(h => h.id === entry.baseInventoryId);
-                const baseDate = new Date(baseInv.date);
-                baseDate.setMinutes(baseDate.getMinutes() + baseDate.getTimezoneOffset());
+                const baseDate = baseInv ? new Date(baseInv.date) : new Date();
+                if(baseInv) baseDate.setMinutes(baseDate.getMinutes() + baseDate.getTimezoneOffset());
                 const orderFor = new Date(entry.orderForDate);
                 orderFor.setMinutes(orderFor.getMinutes() + orderFor.getTimezoneOffset());
-                title = `Pedido para ${orderFor.toLocaleDateString('es-AR')} (Base: ${baseDate.toLocaleDateString('es-AR')})`;
+                title = `Pedido para ${orderFor.toLocaleDateString('es-AR')} (Base: ${baseInv ? baseDate.toLocaleDateString('es-AR') : 'N/A'})`;
             } else {
                 const date = new Date(entry.date);
                 date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
@@ -1038,11 +1038,6 @@
         }
 
 
-        function initialize() {
-            // No need to call loadState here, onSnapshot will populate the state
-            switchView(el.mainMenu);
-        }
-
         async function handleInventoryNext() {
             const rawValue = el.itemQuantity.value.replace(',', '.');
             const quantity = rawValue !== '' ? parseFloat(rawValue) : null;
@@ -1105,13 +1100,14 @@
         el.manageItemsBtn.addEventListener('click', () => { renderManageItemsList(); switchView(el.manageItems); });
 
         el.startCountingBtn.addEventListener('click', async () => {
-            state.currentInventory = {
-                id: Date.now(),
+            const newInventory = {
+                id: String(Date.now()),
                 type: 'inventory',
                 date: el.inventoryDate.value,
                 timeOfDay: el.inventoryTime.value,
                 items: state.masterItems.map(name => ({ name, quantity: null }))
             };
+            state.currentInventory = newInventory;
             itemsToCountQueue = state.currentInventory.items.map((_, index) => index);
             positionInQueue = 0;
             currentIndex = itemsToCountQueue[0];
@@ -1121,10 +1117,15 @@
         });
 
         el.startOrderingBtn.addEventListener('click', async () => {
-            const baseInv = state.history[tempBaseInventoryIndex];
+            const baseInv = state.history.find(h => h.id === tempBaseInventoryId);
+            if (!baseInv) {
+                alert('Error: No se encontró el inventario base.');
+                return;
+            }
             state.currentOrder = {
-                id: Date.now(),
+                id: String(Date.now()),
                 type: 'order',
+                date: new Date().toISOString(), // FIX: Add date for sorting
                 orderForDate: el.orderForDate.value,
                 baseInventoryId: baseInv.id,
                 items: baseInv.items.map(item => ({ name: item.name, stock: item.quantity, toOrder: null, received: null }))
@@ -1184,7 +1185,7 @@
             if (!state.currentInventory) return;
             try {
                 const batch = writeBatch(db);
-                const historyDocRef = doc(refs.history(), String(state.currentInventory.id));
+                const historyDocRef = refs.historyDoc(state.currentInventory.id);
                 batch.set(historyDocRef, state.currentInventory);
                 batch.delete(refs.currentInventory());
                 await batch.commit();
@@ -1199,7 +1200,7 @@
             if (!state.currentOrder) return;
             try {
                 const batch = writeBatch(db);
-                const historyDocRef = doc(refs.history(), String(state.currentOrder.id));
+                const historyDocRef = refs.historyDoc(state.currentOrder.id);
                 batch.set(historyDocRef, state.currentOrder);
                 batch.delete(refs.currentOrder());
                 await batch.commit();
@@ -1302,14 +1303,19 @@
                 signInWithEmailAndPassword(auth, email, password)
                     .catch(error => {
                         console.error("Sign-in failed:", error);
-                        el.loginError.textContent = 'Correo o contraseña incorrectos.';
+                        el.loginError.textContent = 'Credenciales inválidas. Revisa tu correo y contraseña.';
                     });
             } else {
                 createUserWithEmailAndPassword(auth, email, password)
                     .catch(error => {
                         console.error("Sign-up failed:", error);
                         if (error.code === 'auth/email-already-in-use') {
-                            el.loginError.textContent = 'Este correo ya está registrado.';
+                            el.loginError.textContent = 'Este correo ya está registrado. Intenta iniciar sesión.';
+                            isLoginMode = true;
+                            el.authTitle.textContent = 'Iniciar Sesión';
+                            el.authActionBtn.textContent = 'Iniciar Sesión';
+                            el.authToggleText.textContent = '¿No tienes cuenta?';
+                            el.authToggleBtn.textContent = 'Regístrate';
                         } else if (error.code === 'auth/weak-password') {
                             el.loginError.textContent = 'La contraseña debe tener al menos 6 caracteres.';
                         } else {
