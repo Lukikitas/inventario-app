@@ -979,12 +979,14 @@
         function renderConsumptionReport() {
             const startId = el.startInventorySelect.value;
             const endId = el.endInventorySelect.value;
-            if (!startId || !endId || startId >= endId) {
+            
+            const startInv = state.history.find(h => h.id == startId);
+            const endInv = state.history.find(h => h.id == endId);
+
+            if (!startInv || !endInv || new Date(startInv.date) >= new Date(endInv.date)) {
                 alert('Asegúrate de seleccionar un inventario inicial y final válidos. La fecha inicial debe ser anterior a la final.');
                 return;
             }
-            const startInv = state.history.find(h => h.id == startId);
-            const endInv = state.history.find(h => h.id == endId);
             
             const startDate = new Date(startInv.date);
             const endDate = new Date(endInv.date);
