@@ -1715,7 +1715,13 @@
                 el.analyzeCreationRemitoBtn.disabled = true;
 
                 try {
-                    const prompt = `Analiza el siguiente remito. Extrae ÚNICAMENTE los productos que veas en el documento y sus cantidades. NO incluyas ningún ítem de la lista si no está explícitamente escrito en el remito. La lista de productos válidos es: [${state.masterItems.join(', ')}]. Devuelve solo un único array JSON con el formato '[{\"item\": \"NOMBRE_DEL_ITEM_ENCONTRADO\", \"quantity\": CANTIDAD}]'. Si no encuentras un ítem, simplemente no lo incluyas en el array.`;
+                   const prompt = `Analiza las siguientes imágenes. Pueden ser fotos de uno o varios documentos, como remitos o listados de productos. Estos documentos pueden contener mucha información (códigos, fechas, precios, etc.), pero tu única tarea es identificar los **nombres de los productos y sus cantidades totales**.
+
+Busca correspondencias entre lo que ves en las imágenes y la siguiente lista de productos válidos: [${state.masterItems.join(', ')}].
+
+**Instrucción Clave para Cantidades:** Si una cantidad en el documento usa una coma como separador decimal (por ejemplo, '2,00' o '15,50'), trátala como un número decimal (2 o 15.5). No la interpretes como un número grande (200).
+
+Devuelve **únicamente** un array JSON con el formato '[{\"item\": \"NOMBRE_DEL_ITEM_ENCONTRADO\", \"quantity\": CANTIDAD}]'. No incluyas ítems que no estén en la lista de productos válidos o que no aparezcan explícitamente en las imágenes.`;
                     
                     const fileParts = await Promise.all(
                         Array.from(files).map(async (file) => {
