@@ -1715,13 +1715,18 @@
                 el.analyzeCreationRemitoBtn.disabled = true;
 
                 try {
-                   const prompt = `Analiza las siguientes imágenes. Pueden ser fotos de uno o varios documentos, como remitos o listados de productos. Estos documentos pueden contener mucha información (códigos, fechas, precios, etc.), pero tu única tarea es identificar los **nombres de los productos y sus cantidades totales**.
+                  
+                    const prompt = `Tu tarea es actuar como un extractor de datos inteligente. Te proporcionaré una o más imágenes que, en conjunto, forman un **único documento o listado** (la lista puede continuar de una imagen a otra).
 
-Busca correspondencias entre lo que ves en las imágenes y la siguiente lista de productos válidos: [${state.masterItems.join(', ')}].
+**Tu objetivo es analizar TODAS las imágenes como un solo conjunto y extraer una lista consolidada de productos y sus cantidades.**
 
-**Instrucción Clave para Cantidades:** Si una cantidad en el documento usa una coma como separador decimal (por ejemplo, '2,00' o '15,50'), trátala como un número decimal (2 o 15.5). No la interpretes como un número grande (200).
+Sigue estos pasos lógicos:
+1.  **Consolida la Vista:** Primero, trata todas las imágenes como si fueran páginas de un mismo documento.
+2.  **Identifica Columnas Clave:** Enfócate en las columnas que contienen el nombre del producto (usualmente llamada 'Artículo' o 'Descripción') y la cantidad (usualmente 'Cantidad'). Ignora por completo otras columnas como 'Código', 'Precio' o 'Costo'.
+3.  **Extrae y Valida:** Recorre cada fila del listado completo (a través de todas las imágenes) y extrae el nombre del artículo. Compara ese nombre con la siguiente lista de productos válidos: [${state.masterItems.join(', ')}]. Solo procesa los artículos que coincidan.
+4.  **Interpreta las Cantidades (Regla Crítica):** La cantidad en el documento puede usar una coma como separador decimal (ej: '2,00' debe ser 2; '15,50' debe ser 15.5). Es fundamental que interpretes 'X,00' como el número entero X, y no como Xcientos.
 
-Devuelve **únicamente** un array JSON con el formato '[{\"item\": \"NOMBRE_DEL_ITEM_ENCONTRADO\", \"quantity\": CANTIDAD}]'. No incluyas ítems que no estén en la lista de productos válidos o que no aparezcan explícitamente en las imágenes.`;
+Finalmente, devuelve **UN ÚNICO ARRAY JSON** que contenga todos los artículos y cantidades válidos extraídos del documento completo. El formato debe ser estrictamente: '[{\"item\": \"NOMBRE_DEL_ITEM_VALIDADO\", \"quantity\": CANTIDAD_NUMERICA}]'`;
                     
                     const fileParts = await Promise.all(
                         Array.from(files).map(async (file) => {
