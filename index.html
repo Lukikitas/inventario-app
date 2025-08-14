@@ -79,6 +79,18 @@
                     </div>
                 </div>
                 <button id="generate-consumption-report-btn" class="mt-8 w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg">Generar Reporte</button>
+                <button id="start-comparison-btn" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg">Comparar Períodos</button>
+                <div id="comparison-container" class="w-full space-y-4 mt-4 hidden">
+                    <div>
+                        <label for="start-inventory-select-2" class="block text-sm font-medium text-gray-300 mb-1">Inventario Inicial (Período 2)</label>
+                        <select id="start-inventory-select-2" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600"></select>
+                    </div>
+                    <div>
+                        <label for="end-inventory-select-2" class="block text-sm font-medium text-gray-300 mb-1">Inventario Final (Período 2)</label>
+                        <select id="end-inventory-select-2" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600"></select>
+                    </div>
+                    <button id="generate-comparison-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg hidden">Generar Comparación</button>
+                </div>
             </div>
 
             <div id="consumption-result-view" class="view hidden absolute inset-0 flex flex-col h-full">
@@ -87,6 +99,7 @@
                     <h1 class="text-xl font-bold text-center text-gray-100">Resultado del Reporte</h1>
                     <div class="w-8"></div>
                 </div>
+                <input type="text" id="consumption-search" placeholder="Buscar ítem" class="mb-4 bg-gray-700 text-white p-2 rounded-lg">
                 <div id="consumption-result-list" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
             </div>
 
@@ -350,7 +363,10 @@
             currentInventory: null,
             currentOrder: null,
             history: [],
-            masterItems: []
+            masterItems: [],
+            consumptionResults: [],
+            consumptionComparison: null,
+            consumptionMode: 'single'
         };
         let itemsToCountQueue = [];
         let positionInQueue = -1;
@@ -461,6 +477,12 @@
                 startInventorySelect: document.getElementById('start-inventory-select'),
                 endInventorySelect: document.getElementById('end-inventory-select'),
                 generateConsumptionReportBtn: document.getElementById('generate-consumption-report-btn'),
+                startComparisonBtn: document.getElementById('start-comparison-btn'),
+                comparisonContainer: document.getElementById('comparison-container'),
+                startInventorySelect2: document.getElementById('start-inventory-select-2'),
+                endInventorySelect2: document.getElementById('end-inventory-select-2'),
+                generateComparisonBtn: document.getElementById('generate-comparison-btn'),
+                consumptionSearch: document.getElementById('consumption-search'),
                 consumptionResultList: document.getElementById('consumption-result-list'),
                 backToConsumptionSetupBtn: document.getElementById('back-to-consumption-setup-btn'),
                 logoutBtn: document.getElementById('logout-btn'),
@@ -1104,46 +1126,44 @@
                 const inventories = state.history.filter(h => h.type === 'inventory').sort((a,b) => new Date(a.date) - new Date(b.date));
                 el.startInventorySelect.innerHTML = '';
                 el.endInventorySelect.innerHTML = '';
+                el.startInventorySelect2.innerHTML = '';
+                el.endInventorySelect2.innerHTML = '';
                 inventories.forEach(inv => {
                     const date = new Date(inv.date);
                     date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
                     const option = `<option value="${inv.id}">${date.toLocaleDateString('es-AR')} - ${inv.timeOfDay}</option>`;
                     el.startInventorySelect.innerHTML += option;
                     el.endInventorySelect.innerHTML += option;
+                    el.startInventorySelect2.innerHTML += option;
+                    el.endInventorySelect2.innerHTML += option;
                 });
+                el.comparisonContainer.classList.add('hidden');
+                el.generateComparisonBtn.classList.add('hidden');
+                el.generateConsumptionReportBtn.classList.remove('hidden');
+                el.startComparisonBtn.classList.remove('hidden');
+                el.consumptionSearch.value = '';
+                state.consumptionMode = 'single';
                 switchView(el.consumptionSetup);
             }
 
-            function renderConsumptionReport() {
-                const startId = el.startInventorySelect.value;
-                const endId = el.endInventorySelect.value;
-                
+            function computeConsumption(startId, endId) {
                 const startInv = state.history.find(h => h.id == startId);
                 const endInv = state.history.find(h => h.id == endId);
 
                 if (!startInv || !endInv || new Date(startInv.date) >= new Date(endInv.date)) {
-                    alert('Asegúrate de seleccionar un inventario inicial y final válidos. La fecha inicial debe ser anterior a la final.');
-                    return;
+                    return null;
                 }
-                
+
                 const startDate = new Date(startInv.date);
                 const endDate = new Date(endInv.date);
-                
-                const receivedOrders = state.history.filter(h => 
+
+                const receivedOrders = state.history.filter(h =>
                     h.type === 'order' &&
                     new Date(h.orderForDate) > startDate &&
                     new Date(h.orderForDate) <= endDate
                 );
 
-                el.consumptionResultList.innerHTML = '';
-                const header = `<div class="grid grid-cols-5 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600 text-sm sticky-header">
-                                    <span class="col-span-2">Ítem</span>
-                                    <span class="text-right">Inicial</span>
-                                    <span class="text-right">Recibido</span>
-                                    <span class="text-right">Final</span>
-                                    <span class="text-right">Consumo</span>
-                               </div>`;
-                el.consumptionResultList.innerHTML = header;
+                const results = [];
 
                 state.masterItems.forEach(itemName => {
                     const startItem = startInv.items.find(i => i.name === itemName);
@@ -1164,17 +1184,111 @@
                     const consumption = (startStock + receivedStock) - endStock;
 
                     if (startStock > 0 || endStock > 0 || receivedStock > 0 || consumption !== 0) {
-                        const listItem = document.createElement('div');
-                        listItem.className = 'grid grid-cols-5 gap-2 bg-gray-700 p-3 rounded-lg text-sm';
-                        listItem.innerHTML = `<span class="col-span-2">${itemName}</span>
-                                              <span class="text-right">${startStock}</span>
-                                              <span class="text-right text-green-400">+${receivedStock}</span>
-                                              <span class="text-right">${endStock}</span>
-                                              <span class="text-right font-bold text-orange-400">${consumption.toFixed(2)}</span>`;
-                        el.consumptionResultList.appendChild(listItem);
+                        results.push({ name: itemName, startStock, receivedStock, endStock, consumption });
                     }
                 });
+
+                return results;
+            }
+
+            function renderConsumptionReport() {
+                const startId = el.startInventorySelect.value;
+                const endId = el.endInventorySelect.value;
+
+                const results = computeConsumption(startId, endId);
+                if (!results) {
+                    alert('Asegúrate de seleccionar un inventario inicial y final válidos. La fecha inicial debe ser anterior a la final.');
+                    return;
+                }
+
+                state.consumptionMode = 'single';
+                state.consumptionResults = results;
+                renderConsumptionResultList('');
                 switchView(el.consumptionResult);
+            }
+
+            function renderConsumptionComparison() {
+                const startId1 = el.startInventorySelect.value;
+                const endId1 = el.endInventorySelect.value;
+                const startId2 = el.startInventorySelect2.value;
+                const endId2 = el.endInventorySelect2.value;
+
+                const period1 = computeConsumption(startId1, endId1);
+                const period2 = computeConsumption(startId2, endId2);
+
+                if (!period1 || !period2) {
+                    alert('Verifica que todos los rangos seleccionados sean válidos.');
+                    return;
+                }
+
+                state.consumptionMode = 'comparison';
+                state.consumptionComparison = { period1, period2 };
+                renderConsumptionComparisonList('');
+                switchView(el.consumptionResult);
+            }
+
+            function renderConsumptionResultList(searchTerm = '') {
+                el.consumptionResultList.innerHTML = '';
+                const header = `<div class="grid grid-cols-5 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600 text-sm sticky-header">
+                                    <span class="col-span-2">Ítem</span>
+                                    <span class="text-right">Inicial</span>
+                                    <span class="text-right">Recibido</span>
+                                    <span class="text-right">Final</span>
+                                    <span class="text-right">Consumo</span>
+                               </div>`;
+                el.consumptionResultList.innerHTML = header;
+
+                state.consumptionResults
+                    .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .forEach(item => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'grid grid-cols-5 gap-2 bg-gray-700 p-3 rounded-lg text-sm';
+                        listItem.innerHTML = `<span class="col-span-2">${item.name}</span>
+                                              <span class="text-right">${item.startStock}</span>
+                                              <span class="text-right text-green-400">+${item.receivedStock}</span>
+                                              <span class="text-right">${item.endStock}</span>
+                                              <span class="text-right font-bold text-orange-400">${item.consumption.toFixed(2)}</span>`;
+                        el.consumptionResultList.appendChild(listItem);
+                    });
+            }
+
+            function renderConsumptionComparisonList(searchTerm = '') {
+                el.consumptionResultList.innerHTML = '';
+                const header = `<div class="grid gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600 text-sm sticky-header" style="grid-template-columns: 2fr repeat(8, 1fr);">
+                                    <span>Ítem</span>
+                                    <span class="text-right">Ini 1</span>
+                                    <span class="text-right">Rec 1</span>
+                                    <span class="text-right">Fin 1</span>
+                                    <span class="text-right">Cons 1</span>
+                                    <span class="text-right">Ini 2</span>
+                                    <span class="text-right">Rec 2</span>
+                                    <span class="text-right">Fin 2</span>
+                                    <span class="text-right">Cons 2</span>
+                               </div>`;
+                el.consumptionResultList.innerHTML = header;
+
+                const allNames = Array.from(new Set([
+                    ...state.consumptionComparison.period1.map(r => r.name),
+                    ...state.consumptionComparison.period2.map(r => r.name)
+                ])).filter(name => name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                allNames.forEach(name => {
+                    const item1 = state.consumptionComparison.period1.find(r => r.name === name) || { startStock: 0, receivedStock: 0, endStock: 0, consumption: 0 };
+                    const item2 = state.consumptionComparison.period2.find(r => r.name === name) || { startStock: 0, receivedStock: 0, endStock: 0, consumption: 0 };
+                    const listItem = document.createElement('div');
+                    listItem.className = 'grid gap-2 bg-gray-700 p-3 rounded-lg text-sm';
+                    listItem.style.gridTemplateColumns = '2fr repeat(8, 1fr)';
+                    listItem.innerHTML = `<span>${name}</span>
+                                          <span class="text-right">${item1.startStock}</span>
+                                          <span class="text-right text-green-400">+${item1.receivedStock}</span>
+                                          <span class="text-right">${item1.endStock}</span>
+                                          <span class="text-right font-bold text-orange-400">${item1.consumption.toFixed(2)}</span>
+                                          <span class="text-right">${item2.startStock}</span>
+                                          <span class="text-right text-green-400">+${item2.receivedStock}</span>
+                                          <span class="text-right">${item2.endStock}</span>
+                                          <span class="text-right font-bold text-orange-400">${item2.consumption.toFixed(2)}</span>`;
+                    el.consumptionResultList.appendChild(listItem);
+                });
             }
 
             function renderRemitoConfirmView(detectedItems) {
@@ -1406,7 +1520,7 @@
             el.backToMenuFromSelectInvBtn.addEventListener('click', () => switchView(el.mainMenu));
             el.backToSelectInvBtn.addEventListener('click', () => switchView(el.selectInventory));
             el.backToMenuFromConsumptionBtn.addEventListener('click', () => switchView(el.mainMenu));
-            el.backToConsumptionSetupBtn.addEventListener('click', () => switchView(el.consumptionSetup));
+            el.backToConsumptionSetupBtn.addEventListener('click', () => renderConsumptionSetup());
             el.backToHistoryFromEditBtn.addEventListener('click', () => switchView(el.history));
             el.backToHistoryFromEditInvBtn.addEventListener('click', () => switchView(el.history));
             el.backToSetupOrderBtn.addEventListener('click', () => switchView(el.setupOrder));
@@ -1491,6 +1605,20 @@
             });
             
             el.generateConsumptionReportBtn.addEventListener('click', renderConsumptionReport);
+            el.startComparisonBtn.addEventListener('click', () => {
+                el.comparisonContainer.classList.remove('hidden');
+                el.generateComparisonBtn.classList.remove('hidden');
+                el.startComparisonBtn.classList.add('hidden');
+                el.generateConsumptionReportBtn.classList.add('hidden');
+            });
+            el.generateComparisonBtn.addEventListener('click', renderConsumptionComparison);
+            el.consumptionSearch.addEventListener('input', (e) => {
+                if (state.consumptionMode === 'single') {
+                    renderConsumptionResultList(e.target.value);
+                } else {
+                    renderConsumptionComparisonList(e.target.value);
+                }
+            });
             el.orderFinishedDownloadPdfBtn.addEventListener('click', () => handleDownloadPdf(state.currentOrder, 'order'));
             el.finalDownloadBtn.addEventListener('click', () => handleDownloadPdf(state.currentInventory, 'inventory'));
             
