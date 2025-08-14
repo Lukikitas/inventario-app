@@ -684,12 +684,12 @@
                 if (!entry || !entry.items) return alert('No hay datos para generar el PDF.');
 
                 if (type === 'order') {
-                    const tableData = entry.items.filter(item => item.toOrder !== null && item.toOrder !== 'NO PEDIR').map(item => [item.name, item.stock, item.toOrder, item.received ?? item.toOrder]);
+                    const tableData = entry.items.filter(item => item.toOrder !== null && item.toOrder !== 'NO PEDIR' && typeof item.toOrder === 'number').map(item => [item.name, item.toOrder]);
                     if (tableData.length === 0) return alert('No hay items en el pedido para generar el PDF.');
                     const orderForDate = new Date(entry.orderForDate);
                     orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
                     doc.text(`Pedido para el día: ${orderForDate.toLocaleDateString('es-AR')}`, 14, 22);
-                    doc.autoTable({ head: [['Ítem', 'Stock', 'Pedido', 'Recibido']], body: tableData, startY: 35 });
+                    doc.autoTable({ head: [['Ítem', 'Cantidad']], body: tableData, startY: 35 });
                 } else {
                     const countedItems = entry.items.filter(item => item.quantity !== null);
                     if (countedItems.length === 0) return alert('No hay items con cantidad para generar el PDF.');
