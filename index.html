@@ -690,6 +690,14 @@
                     orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
                     doc.text(`Pedido para el día: ${orderForDate.toLocaleDateString('es-AR')}`, 14, 22);
                     doc.autoTable({ head: [['Ítem', 'Cantidad']], body: tableData, startY: 35 });
+
+                    const totalItems = tableData.length;
+                    const totalBultos = tableData.reduce((sum, item) => sum + item[1], 0);
+                    const finalY = doc.autoTable.previous.finalY;
+
+                    doc.text(`Cantidad de items: ${totalItems}`, 14, finalY + 10);
+                    doc.text(`Cantidad de bultos: ${totalBultos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 14, finalY + 17);
+
                 } else {
                     const countedItems = entry.items.filter(item => item.quantity !== null);
                     if (countedItems.length === 0) return alert('No hay items con cantidad para generar el PDF.');
