@@ -613,12 +613,12 @@
                     // Calculate and display "Already Ordered"
                     const newOrderDate = new Date(state.currentOrder.orderForDate);
                     const baseInventory = state.history.find(h => h.id === state.currentOrder.baseInventoryId);
-
+                    
                     let alreadyOrdered = 0;
                     if (baseInventory) {
                         const baseInventoryDate = new Date(baseInventory.date);
 
-                        const previousOrders = state.history.filter(h =>
+                        const previousOrders = state.history.filter(h => 
                             h.type === 'order' &&
                             h.baseInventoryId === state.currentOrder.baseInventoryId &&
                             new Date(h.orderForDate) < newOrderDate &&
@@ -1070,7 +1070,7 @@
                 filteredItems.forEach((name, index) => {
                     const originalIndex = state.masterItems.indexOf(name);
                     const listItem = document.createElement('div');
-                    listItem.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center gap-2';
+                    listItem.className = 'manage-item-row bg-gray-700 p-3 rounded-lg flex justify-between items-center gap-2';
                     listItem.setAttribute('draggable', true);
                     listItem.dataset.index = originalIndex;
 
