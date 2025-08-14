@@ -15,7 +15,7 @@
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
     <div id="app-container" class="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] relative">
-        
+
         <div id="loading-view" class="view absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <h1 class="text-2xl font-bold text-white">Conectando...</h1>
         </div>
@@ -23,12 +23,12 @@
         <div id="login-view" class="view hidden absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <h1 id="auth-title" class="text-4xl font-bold text-white mb-4">Iniciar Sesión</h1>
             <p class="text-gray-400 mb-8">Ingresa a tu cuenta para ver tu inventario.</p>
-            
+
             <div class="w-full space-y-4">
                 <input type="email" id="email-input" placeholder="Correo electrónico" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 focus:border-indigo-500">
                 <input type="password" id="password-input" placeholder="Contraseña" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 focus:border-indigo-500">
             </div>
-            
+
             <button id="auth-action-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Iniciar Sesión</button>
 
             <p class="text-sm text-gray-400 mt-4">
@@ -61,7 +61,7 @@
                     <button id="logout-btn" class="text-sm text-red-400 hover:text-red-300">Cerrar Sesión</button>
                 </div>
             </div>
-            
+
             <div id="consumption-setup-view" class="view hidden absolute inset-0 flex flex-col h-full">
                 <div class="flex items-center justify-between mb-4">
                     <button id="back-to-menu-from-consumption-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
@@ -133,7 +133,7 @@
                 </div>
                  <button id="back-to-setup-order-btn" class="mt-8 w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Atrás</button>
             </div>
-            
+
             <div id="remito-upload-view" class="view hidden absolute inset-0 flex flex-col h-full">
                 <div class="flex items-center justify-between mb-4">
                     <button id="back-to-order-method-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
@@ -158,7 +158,7 @@
                    <div class="w-8"></div>
                 </div>
                 <p class="text-sm text-gray-400 mb-4 text-center">Ajusta, agrega o elimina ítems del remito.</p>
-                
+
                 <div class="mb-4 p-3 bg-gray-900/50 rounded-lg space-y-2">
                     <h3 class="text-md font-semibold mb-2 text-gray-300">Agregar Ítem Manualmente</h3>
                     <select id="add-remito-item-select" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600"></select>
@@ -169,7 +169,7 @@
                 </div>
 
                 <div id="remito-confirm-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
-                
+
                 <div id="remito-summary-footer" class="sticky-footer p-4 mt-4 border-t border-gray-600 rounded-b-lg">
                     <div class="flex justify-between items-center text-lg">
                         <p class="text-gray-300">Ítems: <span id="remito-item-count" class="font-bold text-white">0</span></p>
@@ -320,7 +320,7 @@
                  </div>
             </div>
         </div>
-        
+
         <div id="nav-buttons" class="mt-6 flex justify-center space-x-2" style="display: none;">
             <button id="discard-progress-btn" class="bg-red-800 hover:bg-red-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Descartar</button>
             <button data-context="inventory" id="summary-btn" class="bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">Resumen</button>
@@ -328,7 +328,7 @@
             <button id="save-and-exit-btn" class="bg-indigo-800 hover:bg-indigo-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Guardar y Salir</button>
         </div>
     </div>
-    
+
     <div id="toast-notification" class="hidden fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50"></div>
 
     <div id="confirm-delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
@@ -362,7 +362,7 @@
         const db = getFirestore(app);
 
         const initialItemsList = ["ACEITE FRITURA", "ALMIBAR PARA FACTURA X 7 KG", "AZUCAR INDIVIDUAL KFC", "BANDEJA CANOA KFC", "BOLSA DE LLEVAR GRANDE KFC2", "BOLSA DE RESIDUOS CHICA", "BOLSA DE RESIDUOS NEGRA X 250 UND", "BOLSA DE RESIDUOS TRANSPARENTE", "BOLSA PARA MARINADO K EN ROLLOS", "BOLSA SIN MANIJA GRANDE KFC X 250 UND", "BUCKET 130OZ KFC X 300UN", "BUCKET 50OZ X 420 UND", "BUCKET 85OZ X 330 UND", "CAFE EN POLVO", "CAJA BIG BOXKFC", "CAJA SNACK CON TAPA KFC X 800 UND", "CANDADITOS KFC", "CHOCOLATE CON MANI X 4.32KG", "CHOCOLATE EN POLVO X 4KG", "CINTA DE SEGURIDAD KFC X 36 UND", "COFIA DE FISELINA DESCARTABLE", "CONO HELADO", "CUCHARITA PARA HELADO X 1000 UND", "CUCHILLO", "EDULCORANTE INDIVIDUAL KFC", "ESTUCHE PAPA CHICA KFC X 800 UND", "ESTUCHE PAPAS GRANDES KFC", "ESTUCHE PAPAS MEDIANAS KFC", "ESTUCHE POPCORN GRANDE", "ESTUCHE POPCORN MEDIANO", "ETC TEMPERO", "FILTRO FREIDORAS FRYMASTER", "FILTRO FREIDORAS HENNY PENNY", "GALLETITA OREO CAJA X36 X 117 GR", "GUANTES VINILO M", "HARINA X 11.389KG", "JUGO DE LIMON INDIVIDUAL", "KETCHUP INDIVIDUAL", "LAMINA ANTIGRASA SANDWICH KFC X1500", "LECHE EN POLVO CAJAX10KG", "MANTECOL", "MANTELITO KFC", "MAYONESA INDIVIDUAL", "MEZCLA HUEVO/LECHE", "MOSTAZA CON MIEL", "MOSTAZA CON MIEL INDIVIDUAL", "MOSTAZA INDIVIDUAL", "PAÑO BLANCO X 300 UN", "PAÑO AZUL", "PAÑO ROJO", "PAPEL ANTIGRASA BLANCO", "PAPEL ANTIGRASA GENERICO CAJA X 4000", "PAPEL ANTIGRASA SANDWICH KFC 2", "PAPEL DE MANOS (TO)", "PAPEL FILM (ROLLO)", "PAPEL HIGIENICO", "PAPEL SILICONADO X 500 UND", "PORTAVASOS KFC X 200 UND", "REVOLVEDOR CAFE MADERA", "ROLLO IMPRESORA FISCAL GENERICO 2", "SAL A GRANEL", "SAL SOBRE INDIVIDUAL KFC", "SALSA BARBACOA A GRANEL", "SALSA BARBACOA INDIVIDUAL", "SALSA PICANTE A GRANEL", "SALSA PICANTE INDIVIDUAL", "SEASONING OR", "SERVILLETAS 30X30 X 5000 UND", "SERVILletas PARA CONO", "SOBRE KFC X 1000 UND", "STICKER REDONDO AMARILLO", "STICKER REDONDO AZUL", "STICKER REDONDO NARANJA", "STICKER REDONDO NEGRO", "STICKER REDONDO ROJO", "STICKER REDONDO VERDE", "STICKER VENCIMIENTO", "SUNDAE KFC 7.25 OZ X 2000 UND", "TAPA BUCKET KFC X 2150 UND", "TAPA CAJA BIG BOX", "TAPA DIPPER", "TAPA VASO CAFE 8 Y 12 OZ X 2000 UND", "TAPA VASO GASEOSA 16OZ", "TAPA VASO GASEOSA 12OZ", "TE INTIZEN ILUMINE (ROJO)", "TENEDOR", "QUESO CHEDDAR EN POLVO", "VASO AVALANCHA KFC X 1200 UND", "VASO CAFE 8 OZ KFC", "VASO CORTESIA KFC", "VASO GASEOSA 12OZ KFC A", "VASO GASEOSA 16OZ KFC A", "VASO GASEOSA 21OZ KFC", "VASO CAFE 12 OZ KFC X 1000", "HELADO DULCE DE LECHE", "HELADO VAINILLA", "JARABE DE FRUTILLA", "SALSA DE CHOCOLATE", "SALSA DE DULCE DE LECHE X 5KG", "QUESO CHEDDAR EN FETAS 2", "LOMITO EN FETAS", "PANCETA KFC", "MANTECA X 6KG", "MAYONESA A GRANEL", "MIXDE ENSALADA", "TOMATE", "PAN PORTENO", "PANAL MEMBRILLO X 72 UND", "REJILLA PASTELERA X 72 UND", "MEDIALUNA DE GRASA X 240 UND", "MEDIALUNA DE MANTECA X 180 UND", "HELADO CONG SUNDAE CHOC", "HELADO CONGELADO SUNDAE DDL", "HELADO CONGELADO AVALANCHA KFC", "PAPAS FRITAS KFC C7 X 18 KG", "AROS DE CEBOLLA X 10KG"];
-        
+
         let state = {
             currentInventory: null,
             currentOrder: null,
@@ -534,7 +534,7 @@
                     userId = user.uid;
                     el.userEmail.textContent = user.email || 'Usuario Anónimo';
                     Object.values(unsubscribe).forEach(unsub => unsub());
-                    
+
                     unsubscribe.masterItems = onSnapshot(refs.masterItems(), (docSnap) => {
                         if (docSnap.exists() && docSnap.data().items) {
                             state.masterItems = docSnap.data().items;
@@ -575,7 +575,7 @@
                     el.loginView.classList.remove('hidden');
                 }
             });
-            
+
             function switchView(viewToShow) {
                 allViews.forEach(v => v.classList.add('hidden'));
                 viewToShow.classList.remove('hidden');
@@ -602,7 +602,7 @@
                 const process = mode === 'order' ? state.currentOrder : state.currentInventory;
                 if (currentIndex < 0 || !process || currentIndex >= process.items.length) return;
                 const item = process.items[currentIndex];
-                
+
                 if (mode === 'order') {
                     el.orderItemName.textContent = item.name;
                     el.orderItemCounter.textContent = `Ítem ${positionInQueue + 1} de ${itemsToCountQueue.length}`;
@@ -613,12 +613,12 @@
                     // Calculate and display "Already Ordered"
                     const newOrderDate = new Date(state.currentOrder.orderForDate);
                     const baseInventory = state.history.find(h => h.id === state.currentOrder.baseInventoryId);
-                    
+
                     let alreadyOrdered = 0;
                     if (baseInventory) {
                         const baseInventoryDate = new Date(baseInventory.date);
 
-                        const previousOrders = state.history.filter(h => 
+                        const previousOrders = state.history.filter(h =>
                             h.type === 'order' &&
                             h.baseInventoryId === state.currentOrder.baseInventoryId &&
                             new Date(h.orderForDate) < newOrderDate &&
@@ -707,8 +707,8 @@
             function renderSummaryList(searchTerm = '') {
                 el.summaryList.innerHTML = '';
                 if (!state.currentInventory || !state.currentInventory.items) return;
-                
-                const filteredItems = state.currentInventory.items.filter(item => 
+
+                const filteredItems = state.currentInventory.items.filter(item =>
                     item.name.toLowerCase().includes(searchTerm.toLowerCase())
                 );
 
@@ -757,7 +757,7 @@
                     el.summaryList.appendChild(listItem);
                 });
             }
-            
+
             function renderHistoryList(forSelection) {
                 const listElement = forSelection ? el.selectInventoryList : el.historyList;
                 listElement.innerHTML = '';
@@ -771,14 +771,14 @@
                 inventories.forEach((inv) => {
                     const details = document.createElement('details');
                     details.className = 'bg-gray-700 rounded-lg';
-                    
+
                     const summary = document.createElement('summary');
                     summary.className = 'p-3 flex justify-between items-center cursor-pointer';
-                    
+
                     const inventoryDate = new Date(inv.date);
                     inventoryDate.setMinutes(inventoryDate.getMinutes() + inventoryDate.getTimezoneOffset());
-                    
-                    const buttonsHTML = forSelection 
+
+                    const buttonsHTML = forSelection
                         ? `<button data-id="${inv.id}" class="select-inv-btn bg-green-600 px-3 py-1 rounded-lg text-sm z-10">Seleccionar</button>`
                         : `<div class="flex gap-2 z-10">
                                <button data-id="${inv.id}" class="edit-inventory-btn bg-yellow-600 px-3 py-1 rounded-lg text-xs">Editar</button>
@@ -795,7 +795,7 @@
 
                     const ordersContainer = document.createElement('div');
                     ordersContainer.className = 'px-3 pb-3 border-t border-gray-600';
-                    
+
                     const relatedOrders = state.history.filter(h => h.type === 'order' && String(h.baseInventoryId) === String(inv.id));
 
                     if (relatedOrders.length > 0) {
@@ -870,13 +870,13 @@
                             relatedOrders.forEach(order => batch.delete(refs.historyDoc(order.id)));
                             batch.delete(refs.historyDoc(invId));
                             await batch.commit();
-                            
+
                             el.confirmDeleteModal.classList.add('hidden');
                             showToast('Inventario y pedidos asociados eliminados.');
                         };
                     });
                 });
-                
+
                 listElement.querySelectorAll('.delete-order-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -898,7 +898,7 @@
                 const entry = state.history[historyIndex];
                 if (!entry) return;
                 const isOrder = entry.type === 'order';
-                
+
                 let title;
                 if (isOrder) {
                     const baseInv = state.history.find(h => h.id === entry.baseInventoryId);
@@ -942,7 +942,7 @@
                 });
                 el.historyDetailPdfBtn.onclick = () => handleDownloadPdf(entry, isOrder ? 'order' : 'inventory');
             }
-            
+
             function renderOrderSummaryList(searchTerm = '') {
                 el.orderSummaryList.innerHTML = '';
                 if (!state.currentOrder) return;
@@ -951,7 +951,7 @@
                 orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
                 el.orderSummaryTitle.textContent = `Pedido para: ${orderForDate.toLocaleDateString('es-AR')}`;
 
-                const filteredItems = state.currentOrder.items.filter(item => 
+                const filteredItems = state.currentOrder.items.filter(item =>
                     item.name.toLowerCase().includes(searchTerm.toLowerCase())
                 );
 
@@ -960,7 +960,7 @@
                     const isNoPedir = item.toOrder === 'NO PEDIR';
                     const listItem = document.createElement('div');
                     listItem.className = 'flex items-center justify-between bg-gray-700 p-3 rounded-lg';
-                    
+
                     const nameSpan = document.createElement('span');
                     nameSpan.className = `flex-1 mr-2 ${isNoPedir ? 'text-gray-500 line-through' : ''}`;
                     nameSpan.textContent = item.name;
@@ -1060,10 +1060,10 @@
                 });
                 switchView(el.editInventory);
             }
-            
+
             function renderManageItemsList(searchTerm = '') {
                 el.manageItemsList.innerHTML = '';
-                const filteredItems = state.masterItems.filter(name => 
+                const filteredItems = state.masterItems.filter(name =>
                     name.toLowerCase().includes(searchTerm.toLowerCase())
                 );
 
@@ -1075,7 +1075,7 @@
                     listItem.dataset.index = originalIndex;
 
                     const dragHandle = `<span class="drag-handle text-gray-400 cursor-grab">&#x2630;</span>`;
-                    
+
                     const nameContainer = document.createElement('div');
                     nameContainer.className = 'flex-grow';
                     nameContainer.innerHTML = `<span class="item-name-text">${name}</span>
@@ -1086,7 +1086,7 @@
                     buttonsContainer.innerHTML = `<button data-index="${originalIndex}" class="edit-item-btn bg-yellow-600 px-3 py-1 rounded-lg text-xs">Editar</button>
                                                   <button data-index="${originalIndex}" class="save-item-btn hidden bg-green-600 px-3 py-1 rounded-lg text-xs">Guardar</button>
                                                   <button data-index="${originalIndex}" class="delete-item-btn bg-red-600 px-3 py-1 rounded-lg text-xs font-bold">&times;</button>`;
-                    
+
                     listItem.innerHTML = dragHandle;
                     listItem.appendChild(nameContainer);
                     listItem.appendChild(buttonsContainer);
@@ -1095,11 +1095,17 @@
 
                 el.manageItemsList.querySelectorAll('.edit-item-btn').forEach(btn => {
                     btn.addEventListener('click', e => {
-                        const listItem = e.target.closest('div');
-                        listItem.querySelector('.item-name-text').classList.add('hidden');
-                        listItem.querySelector('.item-name-input').classList.remove('hidden');
-                        listItem.querySelector('.edit-item-btn').classList.add('hidden');
-                        listItem.querySelector('.save-item-btn').classList.remove('hidden');
+                        const listItem = e.target.closest('.manage-item-row');
+                        if (!listItem) return;
+                        const nameText = listItem.querySelector('.item-name-text');
+                        const nameInput = listItem.querySelector('.item-name-input');
+                        const editBtn = listItem.querySelector('.edit-item-btn');
+                        const saveBtn = listItem.querySelector('.save-item-btn');
+
+                        if (nameText) nameText.classList.add('hidden');
+                        if (nameInput) nameInput.classList.remove('hidden');
+                        if (editBtn) editBtn.classList.add('hidden');
+                        if (saveBtn) saveBtn.classList.remove('hidden');
                     });
                 });
 
@@ -1107,8 +1113,11 @@
                     btn.addEventListener('click', async e => {
                         const index = parseInt(e.target.dataset.index, 10);
                         const oldName = state.masterItems[index];
-                        const listItem = e.target.closest('div');
-                        const newName = listItem.querySelector('.item-name-input').value.trim().toUpperCase();
+                        const listItem = e.target.closest('.manage-item-row');
+                        if (!listItem) return;
+                        const nameInput = listItem.querySelector('.item-name-input');
+                        if (!nameInput) return;
+                        const newName = nameInput.value.trim().toUpperCase();
 
                         if (newName && newName !== oldName) {
                             state.masterItems[index] = newName;
@@ -1360,7 +1369,7 @@
                         uniqueItemsFound.add(bestMatch);
                     }
                 });
-                
+
                 displayRemitoConfirmList();
                 switchView(el.remitoConfirmView);
             }
@@ -1371,7 +1380,7 @@
                 tempRemitoItems.forEach(item => {
                     const listItem = document.createElement('div');
                     listItem.className = 'flex items-center justify-between bg-gray-700 p-3 rounded-lg gap-2';
-                    
+
                     const quantityValue = item.quantity ?? '';
 
                     listItem.innerHTML = `
@@ -1398,7 +1407,7 @@
                     btn.addEventListener('click', (e) => {
                         const itemName = e.target.dataset.itemName;
                         tempRemitoItems = tempRemitoItems.filter(i => i.name !== itemName);
-                        displayRemitoConfirmList(); 
+                        displayRemitoConfirmList();
                     });
                 });
 
@@ -1417,7 +1426,7 @@
             function updateAddItemDropdown() {
                 const currentItemNames = new Set(tempRemitoItems.map(i => i.name));
                 const availableItems = state.masterItems.filter(item => !currentItemNames.has(item));
-                
+
                 el.addRemitoItemSelect.innerHTML = '<option value="">Seleccionar ítem...</option>';
                 availableItems.sort().forEach(item => {
                     el.addRemitoItemSelect.innerHTML += `<option value="${item}">${item}</option>`;
@@ -1483,7 +1492,7 @@
                 renderHistoryList(true);
                 switchView(el.selectInventory);
             });
-            
+
             el.consumptionReportBtn.addEventListener('click', () => renderConsumptionSetup());
             el.historyBtn.addEventListener('click', () => { renderHistoryList(false); switchView(el.history); });
             el.manageItemsBtn.addEventListener('click', () => { renderManageItemsList(); switchView(el.manageItems); });
@@ -1593,7 +1602,7 @@
                     console.error("Error saving inventory:", error);
                 }
             });
-            
+
             el.saveOrderBtn.addEventListener('click', async () => {
                 if (!state.currentOrder) return;
                 try {
@@ -1612,7 +1621,7 @@
             el.saveEditedOrderBtn.addEventListener('click', async () => {
                 const orderRef = refs.historyDoc(editingId);
                 const orderData = { ...state.history.find(h => h.id == editingId) };
-                
+
                 el.editOrderList.querySelectorAll('input[data-index]').forEach(input => {
                     const itemIndex = parseInt(input.dataset.index, 10);
                     const rawValue = input.value.replace(',', '.');
@@ -1640,7 +1649,7 @@
                 showToast('Inventario actualizado!');
                 switchView(el.history);
             });
-            
+
             el.generateConsumptionReportBtn.addEventListener('click', renderConsumptionReport);
             el.startComparisonBtn.addEventListener('click', () => {
                 el.comparisonContainer.classList.remove('hidden');
@@ -1658,7 +1667,7 @@
             });
             el.orderFinishedDownloadPdfBtn.addEventListener('click', () => handleDownloadPdf(state.currentOrder, 'order'));
             el.finalDownloadBtn.addEventListener('click', () => handleDownloadPdf(state.currentInventory, 'inventory'));
-            
+
             el.globalSummaryBtn.addEventListener('click', (e) => {
                 if (e.target.dataset.context === 'order') {
                     renderOrderSummaryList();
@@ -1668,7 +1677,7 @@
                     switchView(el.summary);
                 }
             });
-            
+
             el.globalPdfBtn.addEventListener('click', (e) => {
                 if (e.target.dataset.context === 'order') {
                     handleDownloadPdf(state.currentOrder, 'order');
@@ -1676,7 +1685,7 @@
                     handleDownloadPdf(state.currentInventory, 'inventory');
                 }
             });
-            
+
             el.saveAndExitBtn.addEventListener('click', async () => {
                 if (appMode === 'inventory' && state.currentInventory) {
                     await setDoc(refs.currentInventory(), state.currentInventory);
@@ -1760,14 +1769,14 @@
             el.logoutBtn.addEventListener('click', () => {
                 signOut(auth);
             });
-            
+
             el.confirmRemitoDataBtn.addEventListener('click', async () => {
                 const baseInv = state.history.find(h => h.id === tempBaseInventoryId);
                 if (!baseInv) {
                     alert('Error: No se encontró el inventario base.');
                     return;
                 }
-                
+
                 if(tempRemitoItems.length === 0){
                     alert('No hay ítems en la lista para crear un pedido.');
                     return;
@@ -1816,7 +1825,7 @@
                     alert('Por favor, selecciona un ítem e ingresa una cantidad válida.');
                 }
             });
-            
+
             el.saveItemOrderBtn.addEventListener('click', async () => {
                 await setDoc(refs.masterItems(), { items: state.masterItems });
                 showToast('Orden de ítems guardado.');
@@ -1828,7 +1837,7 @@
 
             el.remitoUploadCreation.addEventListener('change', () => {
                 el.analyzeCreationRemitoBtn.disabled = !el.remitoUploadCreation.files.length;
-                el.remitoPreviewContainer.innerHTML = ''; 
+                el.remitoPreviewContainer.innerHTML = '';
 
                 if (el.remitoUploadCreation.files.length > 0) {
                     Array.from(el.remitoUploadCreation.files).forEach(file => {
@@ -1865,7 +1874,7 @@
                 el.analyzeCreationRemitoBtn.disabled = true;
 
                 try {
-                  
+
                     const prompt = `Tu tarea es actuar como un extractor de datos inteligente. Te proporcionaré una o más imágenes que, en conjunto, forman un **único documento o listado** (la lista puede continuar de una imagen a otra).
 
 **Tu objetivo es analizar TODAS las imágenes como un solo conjunto y extraer una lista consolidada de productos y sus cantidades.**
@@ -1877,7 +1886,7 @@ Sigue estos pasos lógicos:
 4.  **Interpreta las Cantidades (Regla Crítica):** La cantidad en el documento puede usar una coma como separador decimal (ej: '2,00' debe ser 2; '15,50' debe ser 15.5). Es fundamental que interpretes 'X,00' como el número entero X, y no como Xcientos.
 
 Finalmente, devuelve **UN ÚNICO ARRAY JSON** que contenga todos los artículos y cantidades válidos extraídos del documento completo. El formato debe ser estrictamente: '[{\"item\": \"NOMBRE_DEL_ITEM_VALIDADO\", \"quantity\": CANTIDAD_NUMERICA}]'`;
-                    
+
                     const fileParts = await Promise.all(
                         Array.from(files).map(async (file) => {
                             const base64Data = await toBase64(file);
@@ -1902,13 +1911,13 @@ Finalmente, devuelve **UN ÚNICO ARRAY JSON** que contenga todos los artículos 
                     if (!response.ok) throw new Error(`Error de la API: ${response.statusText}`);
 
                     const result = await response.json();
-                    
+
                     if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                         const jsonText = result.candidates[0].content.parts[0].text;
                         const allDetectedItems = JSON.parse(jsonText);
 
                         const validItems = allDetectedItems.filter(item => item.quantity !== null && item.quantity !== undefined);
-                        
+
                         renderRemitoConfirmView(validItems);
 
                     } else {
