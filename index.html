@@ -53,6 +53,7 @@
                         <button id="start-new-inventory-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Nuevo Inventario</button>
                         <button id="make-order-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Hacer Pedido</button>
                         <button id="consumption-report-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg">Reporte de Consumo</button>
+                        <button id="item-history-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg">Historial de Ítems</button>
                         <button id="history-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Ver Historial</button>
                         <button id="manage-items-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Gestionar Ítems</button>
                     </div>
@@ -60,6 +61,36 @@
                 <div class="p-4">
                     <button id="logout-btn" class="text-sm text-red-400 hover:text-red-300">Cerrar Sesión</button>
                 </div>
+            </div>
+
+            <div id="item-history-setup-view" class="view hidden absolute inset-0 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="back-to-menu-from-item-history-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 class="text-xl font-bold text-center text-gray-100">Historial de Ítems</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div class="w-full space-y-4 mb-4">
+                    <div>
+                        <label for="item-history-start-date" class="block text-sm font-medium text-gray-300 mb-1">Fecha Inicial</label>
+                        <input type="date" id="item-history-start-date" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                    </div>
+                    <div>
+                        <label for="item-history-end-date" class="block text-sm font-medium text-gray-300 mb-1">Fecha Final</label>
+                        <input type="date" id="item-history-end-date" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                    </div>
+                </div>
+                 <input type="search" id="item-history-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
+                <div id="item-history-item-list" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
+                <button id="generate-item-history-report-btn" class="mt-4 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg">Generar Reporte</button>
+            </div>
+
+            <div id="item-history-result-view" class="view hidden absolute inset-0 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="back-to-item-history-setup-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 class="text-xl font-bold text-center text-gray-100">Resultado del Historial</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div id="item-history-result-list" class="flex-grow overflow-y-auto pr-2 space-y-4"></div>
             </div>
 
             <div id="consumption-setup-view" class="view hidden absolute inset-0 flex flex-col h-full">
@@ -408,11 +439,14 @@
                 editInventory: document.getElementById('edit-inventory-view'),
                 consumptionSetup: document.getElementById('consumption-setup-view'),
                 consumptionResult: document.getElementById('consumption-result-view'),
+                itemHistorySetupView: document.getElementById('item-history-setup-view'),
+                itemHistoryResultView: document.getElementById('item-history-result-view'),
                 continueInventoryBtn: document.getElementById('continue-inventory-btn'),
                 continueOrderBtn: document.getElementById('continue-order-btn'),
                 startNewInventoryBtn: document.getElementById('start-new-inventory-btn'),
                 makeOrderBtn: document.getElementById('make-order-btn'),
                 consumptionReportBtn: document.getElementById('consumption-report-btn'),
+                itemHistoryBtn: document.getElementById('item-history-btn'),
                 historyBtn: document.getElementById('history-btn'),
                 manageItemsBtn: document.getElementById('manage-items-btn'),
                 inventoryDate: document.getElementById('inventory-date'),
@@ -1502,8 +1536,39 @@
             });
 
             el.consumptionReportBtn.addEventListener('click', () => renderConsumptionSetup());
+            el.itemHistoryBtn.addEventListener('click', () => {
+                renderItemHistorySetup();
+                switchView(el.itemHistorySetupView);
+            });
             el.historyBtn.addEventListener('click', () => { renderHistoryList(false); switchView(el.history); });
             el.manageItemsBtn.addEventListener('click', () => { renderManageItemsList(); switchView(el.manageItems); });
+
+            function renderItemHistorySetup(searchTerm = '') {
+                const listEl = document.getElementById('item-history-item-list');
+                listEl.innerHTML = '';
+                const filteredItems = state.masterItems.filter(name =>
+                    name.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                filteredItems.forEach(name => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'flex items-center bg-gray-700 p-3 rounded-lg';
+                    listItem.innerHTML = `
+                        <input type="checkbox" id="item-hist-${name}" value="${name}" class="item-history-checkbox h-5 w-5 bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-400">
+                        <label for="item-hist-${name}" class="ml-3 block text-sm font-medium text-gray-200">${name}</label>
+                    `;
+                    listEl.appendChild(listItem);
+                });
+
+                if (!document.getElementById('item-history-start-date').value) {
+                    const today = new Date();
+                    const oneMonthAgo = new Date(today);
+                    oneMonthAgo.setMonth(today.getMonth() - 1);
+                    document.getElementById('item-history-start-date').value = oneMonthAgo.toISOString().split('T')[0];
+                    document.getElementById('item-history-end-date').value = today.toISOString().split('T')[0];
+                }
+            }
+
 
             el.startCountingBtn.addEventListener('click', async () => {
                 const newInventory = {
@@ -1580,6 +1645,107 @@
             el.backToSetupOrderBtn.addEventListener('click', () => switchView(el.setupOrder));
             el.backToOrderMethodBtn.addEventListener('click', () => switchView(el.orderMethodView));
             el.backToRemitoUploadBtn.addEventListener('click', () => switchView(el.remitoUploadView));
+            document.getElementById('back-to-menu-from-item-history-btn').addEventListener('click', () => switchView(el.mainMenu));
+            document.getElementById('back-to-item-history-setup-btn').addEventListener('click', () => switchView(el.itemHistorySetupView));
+            document.getElementById('item-history-search').addEventListener('input', (e) => renderItemHistorySetup(e.target.value));
+            document.getElementById('generate-item-history-report-btn').addEventListener('click', generateItemHistoryReport);
+
+
+            function generateItemHistoryReport() {
+                const startDate = document.getElementById('item-history-start-date').value;
+                const endDate = document.getElementById('item-history-end-date').value;
+
+                if (!startDate || !endDate) {
+                    alert('Por favor, selecciona un rango de fechas.');
+                    return;
+                }
+
+                const selectedItems = Array.from(document.querySelectorAll('.item-history-checkbox:checked')).map(cb => cb.value);
+
+                if (selectedItems.length === 0) {
+                    alert('Por favor, selecciona al menos un ítem.');
+                    return;
+                }
+
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // Include the whole end day
+
+                const relevantOrders = state.history.filter(h => {
+                    if (h.type !== 'order') return false;
+                    const orderForDate = new Date(h.orderForDate);
+                    return orderForDate >= start && orderForDate <= end;
+                });
+
+                const reportData = {};
+
+                selectedItems.forEach(itemName => {
+                    reportData[itemName] = [];
+                    relevantOrders.forEach(order => {
+                        const foundItem = order.items.find(item => item.name === itemName && typeof item.toOrder === 'number');
+                        if (foundItem) {
+                            reportData[itemName].push({
+                                orderForDate: order.orderForDate,
+                                quantity: foundItem.toOrder,
+                                received: foundItem.received ?? foundItem.toOrder
+                            });
+                        }
+                    });
+                    reportData[itemName].sort((a, b) => new Date(a.orderForDate) - new Date(b.orderForDate));
+                });
+
+                renderItemHistoryReport(reportData);
+                switchView(el.itemHistoryResultView);
+            }
+
+            function renderItemHistoryReport(reportData) {
+                const listEl = document.getElementById('item-history-result-list');
+                listEl.innerHTML = '';
+
+                if (Object.keys(reportData).every(key => reportData[key].length === 0)) {
+                    listEl.innerHTML = '<p class="text-gray-400 text-center">No se encontraron pedidos para los ítems seleccionados en este período.</p>';
+                    return;
+                }
+
+                for (const itemName in reportData) {
+                    if (reportData[itemName].length > 0) {
+                        const itemContainer = document.createElement('div');
+                        itemContainer.className = 'bg-gray-800 p-4 rounded-lg';
+
+                        const itemHeader = document.createElement('h3');
+                        itemHeader.className = 'text-lg font-bold text-indigo-400 mb-3';
+                        itemHeader.textContent = itemName;
+                        itemContainer.appendChild(itemHeader);
+
+                        const historyGrid = document.createElement('div');
+                        historyGrid.className = 'space-y-2';
+
+                        const header = `<div class="grid grid-cols-3 gap-4 font-semibold text-gray-400 text-sm">
+                                            <span>Fecha Pedido</span>
+                                            <span class="text-right">Cant. Pedida</span>
+                                            <span class="text-right">Cant. Recibida</span>
+                                        </div>`;
+                        historyGrid.innerHTML += header;
+
+                        reportData[itemName].forEach(record => {
+                            const date = new Date(record.orderForDate);
+                            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                            const recordDiv = document.createElement('div');
+                            recordDiv.className = 'grid grid-cols-3 gap-4 bg-gray-700 p-2 rounded-md text-sm';
+                            recordDiv.innerHTML = `
+                                <span>${date.toLocaleDateString('es-AR')}</span>
+                                <span class="text-right">${record.quantity}</span>
+                                <span class="text-right text-green-400">${record.received}</span>
+                            `;
+                            historyGrid.appendChild(recordDiv);
+                        });
+
+                        itemContainer.appendChild(historyGrid);
+                        listEl.appendChild(itemContainer);
+                    }
+                }
+            }
+
 
             el.addItemBtn.addEventListener('click', () => {
                 const newName = el.newItemName.value.trim().toUpperCase();
