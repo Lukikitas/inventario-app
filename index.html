@@ -188,6 +188,10 @@
                             <label class="block text-sm font-medium text-gray-400">Stock Actual</label>
                             <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
                         </div>
+                        <div id="order-item-already-ordered-container" class="text-center hidden">
+                            <label class="block text-sm font-medium text-gray-400">Ya Pedido</label>
+                            <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
+                        </div>
                         <div class="text-center">
                             <label class="block text-sm font-medium text-gray-400">Cantidad a Pedir</label>
                             <input type="number" step="0.01" id="order-item-quantity" placeholder="Pedir" class="bg-gray-600 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-500 w-32">
@@ -458,6 +462,8 @@
                 orderItemName: document.getElementById('order-item-name'),
                 orderItemStock: document.getElementById('order-item-stock'),
                 orderItemQuantity: document.getElementById('order-item-quantity'),
+                orderItemAlreadyOrderedContainer: document.getElementById('order-item-already-ordered-container'),
+                orderItemAlreadyOrdered: document.getElementById('order-item-already-ordered'),
                 orderNoPedirBtn: document.getElementById('order-no-pedir-btn'),
                 orderSkipBtn: document.getElementById('order-skip-btn'),
                 orderNextBtn: document.getElementById('order-next-btn'),
@@ -603,6 +609,37 @@
                     el.orderItemStock.textContent = item.stock ?? 'N/A';
                     el.orderItemQuantity.value = (item.toOrder === null || item.toOrder === 'NO PEDIR') ? '' : item.toOrder;
                     el.orderItemQuantity.focus();
+
+                    // Calculate and display "Already Ordered"
+                    const newOrderDate = new Date(state.currentOrder.orderForDate);
+                    const baseInventory = state.history.find(h => h.id === state.currentOrder.baseInventoryId);
+
+                    let alreadyOrdered = 0;
+                    if (baseInventory) {
+                        const baseInventoryDate = new Date(baseInventory.date);
+
+                        const previousOrders = state.history.filter(h =>
+                            h.type === 'order' &&
+                            h.baseInventoryId === state.currentOrder.baseInventoryId &&
+                            new Date(h.orderForDate) < newOrderDate &&
+                            new Date(h.orderForDate) > baseInventoryDate
+                        );
+
+                        previousOrders.forEach(order => {
+                            const orderedItem = order.items.find(i => i.name === item.name);
+                            if (orderedItem && typeof orderedItem.toOrder === 'number') {
+                                alreadyOrdered += orderedItem.toOrder;
+                            }
+                        });
+                    }
+
+                    if (alreadyOrdered > 0) {
+                        el.orderItemAlreadyOrdered.textContent = alreadyOrdered;
+                        el.orderItemAlreadyOrderedContainer.classList.remove('hidden');
+                    } else {
+                        el.orderItemAlreadyOrderedContainer.classList.add('hidden');
+                    }
+
                 } else {
                     el.itemName.textContent = item.name;
                     el.itemCounter.textContent = `Ítem ${positionInQueue + 1} de ${itemsToCountQueue.length}`;
