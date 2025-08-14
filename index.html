@@ -131,7 +131,7 @@
                     <div class="w-8"></div>
                 </div>
                 <input type="text" id="consumption-search" placeholder="Buscar ítem" class="mb-4 bg-gray-700 text-white p-2 rounded-lg">
-                <div id="consumption-result-list" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
+                <div id="consumption-result-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-2"></div>
             </div>
 
             <div id="select-inventory-view" class="view hidden absolute inset-0 flex flex-col h-full">
@@ -215,13 +215,15 @@
                     <p id="order-item-counter" class="text-sm font-medium text-blue-400 mb-2">Ítem 1/123</p>
                     <h1 id="order-item-name" class="text-3xl font-bold mb-4 text-gray-100">Nombre del Ítem</h1>
                     <div class="flex items-center justify-center gap-4 w-full mb-6">
-                        <div class="text-center">
-                            <label class="block text-sm font-medium text-gray-400">Stock Actual</label>
-                            <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
-                        </div>
-                        <div id="order-item-already-ordered-container" class="text-center hidden">
-                            <label class="block text-sm font-medium text-gray-400">Ya Pedido</label>
-                            <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="text-center">
+                                <label class="block text-sm font-medium text-gray-400">Stock Actual</label>
+                                <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
+                            </div>
+                            <div id="order-item-already-ordered-container" class="text-center hidden">
+                                <label class="block text-xs font-medium text-gray-400">Ya Pedido</label>
+                                <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-lg p-1 rounded-lg w-24">0</div>
+                            </div>
                         </div>
                         <div class="text-center">
                             <label class="block text-sm font-medium text-gray-400">Cantidad a Pedir</label>
