@@ -211,23 +211,31 @@
             </div>
 
             <div id="order-item-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                <div class="flex-grow flex flex-col items-center justify-center text-center">
-                    <p id="order-item-counter" class="text-sm font-medium text-blue-400 mb-2">Ítem 1/123</p>
-                    <h1 id="order-item-name" class="text-3xl font-bold mb-4 text-gray-100">Nombre del Ítem</h1>
-                    <div class="flex items-center justify-center gap-4 w-full mb-6">
-                        <div class="flex flex-col items-center gap-2">
-                            <div class="text-center">
-                                <label class="block text-sm font-medium text-gray-400">Stock Actual</label>
-                                <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
-                            </div>
-                            <div id="order-item-already-ordered-container" class="text-center hidden">
-                                <label class="block text-xs font-medium text-gray-400">Ya Pedido</label>
-                                <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-lg p-1 rounded-lg w-24">0</div>
-                            </div>
+                <div class="flex-grow flex flex-col items-center justify-between text-center py-4">
+                    <div id="recent-order-history" class="w-full px-4">
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Últimos Pedidos</h3>
+                        <div id="recent-order-history-list" class="space-y-2">
+                            <!-- History will be injected here by JS -->
                         </div>
-                        <div class="text-center">
-                            <label class="block text-sm font-medium text-gray-400">Cantidad a Pedir</label>
-                            <input type="number" step="0.01" id="order-item-quantity" placeholder="Pedir" class="bg-gray-600 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-500 w-32">
+                    </div>
+                    <div>
+                        <p id="order-item-counter" class="text-sm font-medium text-blue-400 mb-2">Ítem 1/123</p>
+                        <h1 id="order-item-name" class="text-3xl font-bold mb-4 text-gray-100">Nombre del Ítem</h1>
+                        <div class="flex items-center justify-center gap-4 w-full mb-6">
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="text-center">
+                                    <label class="block text-sm font-medium text-gray-400">Stock Actual</label>
+                                    <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
+                                </div>
+                                <div id="order-item-already-ordered-container" class="text-center hidden">
+                                    <label class="block text-xs font-medium text-gray-400">Ya Pedido</label>
+                                    <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-lg p-1 rounded-lg w-24">0</div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <label class="block text-sm font-medium text-gray-400">Cantidad a Pedir</label>
+                                <input type="number" step="0.01" id="order-item-quantity" placeholder="Pedir" class="bg-gray-600 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-500 w-32">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -280,10 +288,18 @@
             </div>
 
             <div id="item-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                <div class="flex-grow flex flex-col items-center justify-center text-center">
-                    <p id="item-counter" class="text-sm font-medium text-indigo-400 mb-2">Ítem 1/123</p>
-                    <h1 id="item-name" class="text-3xl font-bold mb-6 text-gray-100">Nombre del Ítem</h1>
-                    <input type="number" step="0.01" id="item-quantity" placeholder="Ingresa la cantidad" class="w-full bg-gray-700 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-600">
+                <div class="flex-grow flex flex-col items-center justify-between text-center py-4">
+                    <div id="recent-inventory-history" class="w-full px-4">
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Últimos ingresos del ítem</h3>
+                        <div id="recent-inventory-history-list" class="space-y-2">
+                            <!-- History will be injected here by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <p id="item-counter" class="text-sm font-medium text-indigo-400 mb-2">Ítem 1/123</p>
+                        <h1 id="item-name" class="text-3xl font-bold mb-6 text-gray-100">Nombre del Ítem</h1>
+                        <input type="number" step="0.01" id="item-quantity" placeholder="Ingresa la cantidad" class="w-full bg-gray-700 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-600">
+                    </div>
                 </div>
                 <div class="mt-auto grid grid-cols-3 gap-2">
                     <button id="na-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-2 rounded-lg text-sm">N/A</button>
@@ -646,6 +662,42 @@
                     el.orderItemQuantity.value = (item.toOrder === null || item.toOrder === 'NO PEDIR') ? '' : item.toOrder;
                     el.orderItemQuantity.focus();
 
+                    const historyListEl = document.getElementById('recent-order-history-list');
+                    historyListEl.innerHTML = ''; // Clear previous history
+
+                    const itemOrderHistory = state.history
+                        .filter(h => h.type === 'order')
+                        .map(order => {
+                            const orderedItem = order.items.find(i => i.name === item.name && typeof i.toOrder === 'number');
+                            if (orderedItem) {
+                                return {
+                                    date: order.orderForDate,
+                                    quantity: orderedItem.toOrder
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean) // Remove nulls
+                        .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date descending
+                        .slice(0, 3); // Get the last 3
+
+                    if (itemOrderHistory.length > 0) {
+                        itemOrderHistory.forEach(record => {
+                            const date = new Date(record.date);
+                            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                            const listItem = document.createElement('div');
+                            listItem.className = 'flex justify-between items-center bg-gray-700 p-2 rounded-lg text-sm';
+                            listItem.innerHTML = `
+                                <span class="text-gray-400">${date.toLocaleDateString('es-AR')}</span>
+                                <span class="font-semibold text-white">${record.quantity}</span>
+                            `;
+                            historyListEl.appendChild(listItem);
+                        });
+                    } else {
+                        historyListEl.innerHTML = '<p class="text-sm text-gray-500 text-center">No hay pedidos recientes.</p>';
+                    }
+
+
                     // Calculate and display "Already Ordered"
                     const newOrderDate = new Date(state.currentOrder.orderForDate);
                     const baseInventory = state.history.find(h => h.id === state.currentOrder.baseInventoryId);
@@ -677,6 +729,41 @@
                     }
 
                 } else {
+                    const historyListEl = document.getElementById('recent-inventory-history-list');
+                    historyListEl.innerHTML = ''; // Clear previous history
+
+                    const itemOrderHistory = state.history
+                        .filter(h => h.type === 'order')
+                        .map(order => {
+                            const orderedItem = order.items.find(i => i.name === item.name && typeof i.toOrder === 'number');
+                            if (orderedItem) {
+                                return {
+                                    date: order.orderForDate,
+                                    quantity: orderedItem.toOrder
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .slice(0, 3);
+
+                    if (itemOrderHistory.length > 0) {
+                        itemOrderHistory.forEach(record => {
+                            const date = new Date(record.date);
+                            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                            const listItem = document.createElement('div');
+                            listItem.className = 'flex justify-between items-center bg-gray-700 p-2 rounded-lg text-sm';
+                            listItem.innerHTML = `
+                                <span class="text-gray-400">${date.toLocaleDateString('es-AR')}</span>
+                                <span class="font-semibold text-white">${record.quantity}</span>
+                            `;
+                            historyListEl.appendChild(listItem);
+                        });
+                    } else {
+                        historyListEl.innerHTML = '<p class="text-sm text-gray-500 text-center">No hay ingresos recientes.</p>';
+                    }
+
                     el.itemName.textContent = item.name;
                     el.itemCounter.textContent = `Ítem ${positionInQueue + 1} de ${itemsToCountQueue.length}`;
                     el.itemQuantity.value = (item.quantity === null || item.quantity === 'N/A') ? '' : item.quantity;
