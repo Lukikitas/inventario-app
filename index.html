@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +15,7 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div id="app-container" class="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] relative">
+    <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] relative">
 
         <div id="loading-view" class="view absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <h1 class="text-2xl font-bold text-white">Conectando...</h1>
@@ -46,8 +47,8 @@
                     <p id="user-email" class="text-sm font-semibold truncate"></p>
                 </div>
                 <div class="flex-grow flex flex-col items-center justify-center">
-                    <h1 class="text-4xl font-bold text-white mb-8">Inventario KFC</h1>
-                    <div class="w-full space-y-3 px-4">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-8">Inventario KFC</h1>
+                    <div class="w-full grid gap-3 sm:grid-cols-2 px-4">
                         <button id="continue-inventory-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Inventario</button>
                         <button id="continue-order-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Pedido</button>
                         <button id="start-new-inventory-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Nuevo Inventario</button>
@@ -56,6 +57,20 @@
                         <button id="item-history-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg">Historial de Ítems</button>
                         <button id="history-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Ver Historial</button>
                         <button id="manage-items-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Gestionar Ítems</button>
+                    </div>
+                    <div class="mt-6 p-4 border-t border-gray-700 space-y-3">
+                        <h3 class="text-lg font-semibold text-gray-300">Datos de Uso desde Excel</h3>
+                        <div class="flex items-center gap-2">
+                            <label for="usage-excel-upload" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer text-sm">
+                                Cargar Archivo
+                            </label>
+                            <input type="file" id="usage-excel-upload" class="hidden" accept=".xlsx, .xlsm, .xls">
+                            <button id="excel-config-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm">Opciones</button>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <p id="usage-excel-filename" class="text-xs text-gray-400 text-center truncate">Ningún archivo cargado.</p>
+                            <button id="remove-usage-excel-btn" class="hidden ml-2 text-red-500 hover:text-red-400 font-bold text-xl leading-none">&times;</button>
+                        </div>
                     </div>
                 </div>
                 <div class="p-4">
@@ -220,7 +235,10 @@
                     </div>
                     <div>
                         <p id="order-item-counter" class="text-sm font-medium text-blue-400 mb-2">Ítem 1/123</p>
-                        <h1 id="order-item-name" class="text-3xl font-bold mb-4 text-gray-100">Nombre del Ítem</h1>
+                        <h1 id="order-item-name" class="text-3xl font-bold mb-2 text-gray-100">Nombre del Ítem</h1>
+                        <div id="order-item-usage-container" class="hidden text-center mb-4">
+                            <p class="text-sm text-teal-400">Uso Promedio: <span id="order-item-usage" class="font-bold"></span></p>
+                        </div>
                         <div class="flex items-center justify-center gap-4 w-full mb-6">
                             <div class="flex flex-col items-center gap-2">
                                 <div class="text-center">
@@ -351,6 +369,30 @@
                 <button id="save-item-order-btn" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Guardar Orden</button>
             </div>
 
+            <div id="excel-config-view" class="view hidden absolute inset-0 flex flex-col h-full p-4 bg-gray-800">
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-xl font-bold text-center text-gray-100 flex-grow">Configurar Lectura de Excel</h1>
+                </div>
+                <div class="space-y-4 flex-grow">
+                    <div>
+                        <label for="excel-sheet-name" class="block text-sm font-medium text-gray-300 mb-1">Nombre de la Hoja</label>
+                        <input type="text" id="excel-sheet-name" placeholder="Ej: Hoja1" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                    </div>
+                    <div>
+                        <label for="excel-item-col" class="block text-sm font-medium text-gray-300 mb-1">Encabezado Columna de Ítems</label>
+                        <input type="text" id="excel-item-col" placeholder="Ej: PRODUCTO" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                    </div>
+                    <div>
+                        <label for="excel-usage-col" class="block text-sm font-medium text-gray-300 mb-1">Encabezado Columna de Usos</label>
+                        <input type="text" id="excel-usage-col" placeholder="Ej: USO PROMEDIO" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button id="cancel-excel-config-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Cancelar</button>
+                    <button id="save-excel-config-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Guardar</button>
+                </div>
+            </div>
+
             <div id="finished-view" class="view hidden absolute inset-0 flex-col h-full items-center justify-center text-center">
                  <h1 class="text-3xl font-bold mb-4 text-green-400">¡Inventario Completo!</h1>
                  <p class="text-gray-300 mb-6">Conteo finalizado. Puedes guardarlo o descargarlo.</p>
@@ -419,7 +461,13 @@
             masterItems: [],
             consumptionResults: [],
             consumptionComparison: null,
-            consumptionMode: 'single'
+            consumptionMode: 'single',
+            excelConfig: {
+                sheetName: 'Hoja1',
+                itemColumn: 'ITEM',
+                usageColumn: 'USO'
+            },
+            itemUsageData: {}
         };
         let itemsToCountQueue = [];
         let positionInQueue = -1;
@@ -516,6 +564,8 @@
                 orderItemQuantity: document.getElementById('order-item-quantity'),
                 orderItemAlreadyOrderedContainer: document.getElementById('order-item-already-ordered-container'),
                 orderItemAlreadyOrdered: document.getElementById('order-item-already-ordered'),
+                orderItemUsageContainer: document.getElementById('order-item-usage-container'),
+                orderItemUsage: document.getElementById('order-item-usage'),
                 orderNoPedirBtn: document.getElementById('order-no-pedir-btn'),
                 orderSkipBtn: document.getElementById('order-skip-btn'),
                 orderNextBtn: document.getElementById('order-next-btn'),
@@ -571,12 +621,24 @@
                 addRemitoItemBtn: document.getElementById('add-remito-item-btn'),
                 remitoItemCount: document.getElementById('remito-item-count'),
                 remitoBultoCount: document.getElementById('remito-bulto-count'),
+                excelConfigView: document.getElementById('excel-config-view'),
+                excelSheetName: document.getElementById('excel-sheet-name'),
+                excelItemCol: document.getElementById('excel-item-col'),
+                excelUsageCol: document.getElementById('excel-usage-col'),
+                cancelExcelConfigBtn: document.getElementById('cancel-excel-config-btn'),
+                saveExcelConfigBtn: document.getElementById('save-excel-config-btn'),
+                usageExcelUpload: document.getElementById('usage-excel-upload'),
+                excelConfigBtn: document.getElementById('excel-config-btn'),
+                usageExcelFilename: document.getElementById('usage-excel-filename'),
+                removeUsageExcelBtn: document.getElementById('remove-usage-excel-btn'),
             };
 
             const refs = {
                 masterItems: () => doc(db, 'users', userId, 'data', 'masterItems'),
                 currentInventory: () => doc(db, 'users', userId, 'data', 'currentInventory'),
                 currentOrder: () => doc(db, 'users', userId, 'data', 'currentOrder'),
+                excelConfig: () => doc(db, 'users', userId, 'data', 'excelConfig'),
+                itemUsageData: () => doc(db, 'users', userId, 'data', 'itemUsageData'),
                 history: () => collection(db, 'users', userId, 'history'),
                 historyDoc: (id) => doc(db, 'users', userId, 'history', String(id))
             };
@@ -596,6 +658,19 @@
                         }
                     });
 
+                    unsubscribe.itemUsageData = onSnapshot(refs.itemUsageData(), (docSnap) => {
+                        if (docSnap.exists()) {
+                            state.itemUsageData = docSnap.data();
+                            el.usageExcelFilename.textContent = "Datos de uso de Excel cargados.";
+                            // This button will be added in a future step, but the logic can be here.
+                            if (el.removeUsageExcelBtn) el.removeUsageExcelBtn.classList.remove('hidden');
+                        } else {
+                            state.itemUsageData = {};
+                            el.usageExcelFilename.textContent = "Ningún archivo cargado.";
+                            if (el.removeUsageExcelBtn) el.removeUsageExcelBtn.classList.add('hidden');
+                        }
+                    });
+
                     unsubscribe.currentInventory = onSnapshot(refs.currentInventory(), (docSnap) => {
                         state.currentInventory = docSnap.exists() ? docSnap.data() : null;
                         el.continueInventoryBtn.style.display = state.currentInventory ? 'block' : 'none';
@@ -612,6 +687,14 @@
                         querySnapshot.forEach((doc) => {
                             state.history.push({ ...doc.data(), id: doc.id });
                         });
+                    });
+
+                    unsubscribe.excelConfig = onSnapshot(refs.excelConfig(), (docSnap) => {
+                        if (docSnap.exists()) {
+                            state.excelConfig = { ...state.excelConfig, ...docSnap.data() };
+                        } else {
+                            setDoc(refs.excelConfig(), state.excelConfig);
+                        }
                     });
 
                     el.loadingView.classList.add('hidden');
@@ -661,6 +744,14 @@
                     el.orderItemStock.textContent = item.stock ?? 'N/A';
                     el.orderItemQuantity.value = (item.toOrder === null || item.toOrder === 'NO PEDIR') ? '' : item.toOrder;
                     el.orderItemQuantity.focus();
+
+                    const usageValue = state.itemUsageData[item.name.toUpperCase()];
+                    if (usageValue !== undefined) {
+                        el.orderItemUsage.textContent = usageValue.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        el.orderItemUsageContainer.classList.remove('hidden');
+                    } else {
+                        el.orderItemUsageContainer.classList.add('hidden');
+                    }
 
                     const historyListEl = document.getElementById('recent-order-history-list');
                     historyListEl.innerHTML = ''; // Clear previous history
@@ -2097,6 +2188,94 @@
             el.inventorySummarySearch.addEventListener('input', (e) => renderSummaryList(e.target.value));
             el.orderSummarySearch.addEventListener('input', (e) => renderOrderSummaryList(e.target.value));
             el.manageItemsSearch.addEventListener('input', (e) => renderManageItemsList(e.target.value));
+
+            el.excelConfigBtn.addEventListener('click', () => {
+                el.excelSheetName.value = state.excelConfig.sheetName;
+                el.excelItemCol.value = state.excelConfig.itemColumn;
+                el.excelUsageCol.value = state.excelConfig.usageColumn;
+                switchView(el.excelConfigView);
+            });
+
+            el.cancelExcelConfigBtn.addEventListener('click', () => {
+                switchView(el.mainMenu);
+            });
+
+            el.saveExcelConfigBtn.addEventListener('click', async () => {
+                const newConfig = {
+                    sheetName: el.excelSheetName.value.trim(),
+                    itemColumn: el.excelItemCol.value.trim(),
+                    usageColumn: el.excelUsageCol.value.trim()
+                };
+
+                if (!newConfig.sheetName || !newConfig.itemColumn || !newConfig.usageColumn) {
+                    alert('Todos los campos de configuración son obligatorios.');
+                    return;
+                }
+
+                state.excelConfig = newConfig;
+                await setDoc(refs.excelConfig(), state.excelConfig);
+                showToast('Configuración de Excel guardada.');
+                switchView(el.mainMenu);
+            });
+
+            el.usageExcelUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+
+                        const sheetName = state.excelConfig.sheetName;
+                        if (!workbook.SheetNames.includes(sheetName)) {
+                            throw new Error(`No se encontró la hoja "${sheetName}" en el archivo.`);
+                        }
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                        const itemHeader = state.excelConfig.itemColumn;
+                        const usageHeader = state.excelConfig.usageColumn;
+
+                        if (jsonData.length > 0 && (!jsonData[0].hasOwnProperty(itemHeader) || !jsonData[0].hasOwnProperty(usageHeader))) {
+                             throw new Error(`No se encontraron las columnas "${itemHeader}" y/o "${usageHeader}" en la hoja "${sheetName}". Revisa la configuración.`);
+                        }
+
+                        const newUsageData = {};
+                        jsonData.forEach(row => {
+                            const itemName = String(row[itemHeader]).trim().toUpperCase();
+                            const usageValue = parseFloat(row[usageHeader]);
+                            if (itemName && !isNaN(usageValue)) {
+                                newUsageData[itemName] = usageValue;
+                            }
+                        });
+
+                        await setDoc(refs.itemUsageData(), newUsageData);
+                        showToast(`Datos de uso de ${file.name} cargados y sincronizados.`);
+
+                    } catch (error) {
+                        console.error("Error al procesar el archivo Excel:", error);
+                        alert("Error al procesar el archivo: " + error.message);
+                        el.usageExcelFilename.textContent = 'Error al cargar el archivo.';
+                    } finally {
+                        // Reset file input so user can upload the same file again
+                        event.target.value = '';
+                    }
+                };
+                reader.onerror = () => {
+                    alert('No se pudo leer el archivo.');
+                    event.target.value = '';
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            el.removeUsageExcelBtn.addEventListener('click', async () => {
+                if (confirm('¿Estás seguro de que quieres quitar los datos de uso del Excel?')) {
+                    await deleteDoc(refs.itemUsageData());
+                    showToast('Datos de uso de Excel eliminados.');
+                }
+            });
 
             el.remitoUploadCreation.addEventListener('change', () => {
                 el.analyzeCreationRemitoBtn.disabled = !el.remitoUploadCreation.files.length;
