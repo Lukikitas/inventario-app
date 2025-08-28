@@ -13,7 +13,7 @@ exports.proxySirLogin = onCall(async (request) => {
   }
 
   // IMPORTANT: The URL must match the region and project ID of the deployed function.
-  const sirLoginUrl = 'https://southamerica-east1-mi-app-inventario-e639f.cloudfunctions.net/sirLogin';
+  const sirLoginUrl = 'https://southamerica-west1-mi-app-inventario-e639f.cloudfunctions.net/sirLogin';
 
   try {
     logger.info(`Proxying request for user: ${user} to ${sirLoginUrl}`);
