@@ -13,3 +13,7 @@ details > summary::-webkit-details-marker { display: none; }
 .drag-handle { cursor: grab; }
 .dragging { opacity: 0.5; background: #4f46e5; }
 .drag-over { border-top: 2px solid #a5b4fc; }
+
+#main-content {
+    overflow-y: auto;
+}

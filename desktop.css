@@ -1,0 +1,71 @@
+/* Afecta a la vista de PC, a partir de 1024px de ancho */
+
+body {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+#app-container {
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 0;
+    display: flex;
+}
+
+#app-container {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    grid-template-rows: 1fr auto;
+    width: 100%;
+    height: 100%;
+    position: static;
+}
+
+#main-content {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    overflow-y: auto; /* The individual views inside will handle their own scroll */
+}
+
+#main-menu-view {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3; /* The menu spans both rows for full height */
+    position: static;
+    display: flex !important;
+    background-color: #1f2937;
+    padding: 1.5rem;
+    text-align: left;
+    overflow-y: auto;
+}
+
+#main-menu-view .grid {
+    grid-template-columns: 1fr;
+}
+
+/* The individual views now just need their padding */
+#main-content > .view:not(#main-menu-view) {
+    position: relative;
+    padding: 1.5rem;
+}
+
+/* The nav buttons are placed in the second column, second row */
+#nav-buttons {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    padding: 1rem;
+    background-color: #374151;
+    border-top: 1px solid #4b5563;
+}
+
+
+/* Las vistas de login y carga deben seguir ocupando toda la pantalla */
+#login-view, #loading-view {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+}
