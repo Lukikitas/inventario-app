@@ -1,1 +1,3 @@
-printf '{\n  "projects": { "default": "mi-app-inventario-e639f" }\n}\n' > .firebaserc
+{
+  "projects": { "default": "mi-app-inventario-e639f" }
+}
