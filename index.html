@@ -67,6 +67,22 @@
                         </div>
                         <button id="fetch-sir-data-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-lg">Conectar y Obtener</button>
                         <div id="sir-data-output" class="mt-2 p-3 bg-gray-900 rounded-lg text-left text-sm text-gray-300 min-h-[50px]">Esperando acción...</div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-700 space-y-2">
+                            <h4 class="text-md font-semibold text-gray-200">Reporte de Usos</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="sir-fecha-inicio" class="block text-sm font-medium text-gray-400">Fecha Inicio</label>
+                                    <input type="date" id="sir-fecha-inicio" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600">
+                                </div>
+                                <div>
+                                    <label for="sir-fecha-fin" class="block text-sm font-medium text-gray-400">Fecha Fin</label>
+                                    <input type="date" id="sir-fecha-fin" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600">
+                                </div>
+                            </div>
+                            <button id="fetch-sir-report-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg mt-2">Obtener Reporte de Usos</button>
+                        </div>
+                        <div id="sir-report-output" class="mt-2 p-3 bg-gray-900 rounded-lg text-left text-sm text-gray-300"></div>
                     </div>
                     <div class="mt-6 p-4 border-t border-gray-700 space-y-3">
                         <h3 class="text-lg font-semibold text-gray-300">Datos de Uso desde Excel</h3>
@@ -647,6 +663,10 @@
                 sirPasswordInput: document.getElementById('sir-password-input'),
                 fetchSirDataBtn: document.getElementById('fetch-sir-data-btn'),
                 sirDataOutput: document.getElementById('sir-data-output'),
+                sirFechaInicio: document.getElementById('sir-fecha-inicio'),
+                sirFechaFin: document.getElementById('sir-fecha-fin'),
+                fetchSirReportBtn: document.getElementById('fetch-sir-report-btn'),
+                sirReportOutput: document.getElementById('sir-report-output'),
             };
 
             const refs = {
@@ -1702,7 +1722,7 @@
 
                 outputDiv.textContent = 'Llamando al robot (Cloud Function)... Esto puede tardar hasta un minuto.';
 
-                const sirLogin = httpsCallable(functions, 'sirLogin');
+                const sirLogin = httpsCallable(functions, 'proxySirLogin');
                 try {
                     const result = await sirLogin({ user: user, password: password });
 
@@ -1718,8 +1738,69 @@
                 }
             }
 
+            async function handleSirReportFetch() {
+                const user = el.sirUserInput.value;
+                const password = el.sirPasswordInput.value;
+                const fechaInicio = el.sirFechaInicio.value;
+                const fechaFin = el.sirFechaFin.value;
+                const outputDiv = el.sirReportOutput;
+
+                if (!user || !password || !fechaInicio || !fechaFin) {
+                    outputDiv.textContent = 'Por favor, completa usuario, clave y ambas fechas.';
+                    return;
+                }
+
+                outputDiv.textContent = 'Iniciando sesión en SIR y generando reporte... Esto puede tardar más de un minuto.';
+
+                const getSirReport = httpsCallable(functions, 'proxySirLogin');
+                try {
+                    const result = await getSirReport({
+                        user: user,
+                        password: password,
+                        fechaInicio: fechaInicio,
+                        fechaFin: fechaFin
+                    });
+
+                    const data = result.data;
+
+                    if (data.error) {
+                         outputDiv.innerHTML = `<p class="text-red-400">Error: ${data.error}</p>`;
+                         return;
+                    }
+
+                    if (data.report && Array.isArray(data.report) && data.report.length > 0) {
+                        const headers = Object.keys(data.report[0]);
+                        let tableHTML = '<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead><tr class="border-b border-gray-600">';
+
+                        headers.forEach(header => {
+                            tableHTML += `<th class="py-2 px-2 whitespace-nowrap">${header}</th>`;
+                        });
+
+                        tableHTML += '</tr></thead><tbody>';
+
+                        data.report.forEach(row => {
+                            tableHTML += '<tr class="border-b border-gray-800">';
+                            headers.forEach(header => {
+                                tableHTML += `<td class="py-1 px-2 whitespace-nowrap">${row[header] !== null ? row[header] : ''}</td>`;
+                            });
+                            tableHTML += '</tr>';
+                        });
+
+                        tableHTML += '</tbody></table></div>';
+                        outputDiv.innerHTML = tableHTML;
+                    } else {
+                        outputDiv.innerHTML = `<p class="text-yellow-400">El reporte se generó pero no se encontraron datos, o el formato es inesperado.</p>`;
+                    }
+
+                } catch (error) {
+                    console.error("Error calling cloud function for report:", error);
+                    outputDiv.textContent = `Error al generar el reporte: ${error.message}`;
+                }
+            }
+
             // --- Event Listeners ---
             el.fetchSirDataBtn.addEventListener('click', handleSirLoginAndFetch);
+            el.fetchSirReportBtn.addEventListener('click', handleSirReportFetch);
             el.continueInventoryBtn.addEventListener('click', () => {
                 appMode = 'inventory';
                 itemsToCountQueue = state.currentInventory.items.map((item, index) => ({...item, originalIndex: index})).filter(item => item.quantity === null).map(item => item.originalIndex);

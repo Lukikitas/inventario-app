@@ -1,7 +1,13 @@
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onRequest } = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
+
 exports.proxySirLogin = onCall(
   { region: "southamerica-west1" },   // 👈 agregá esta opción
   async (request) => {
-    const { user, password } = request.data;
+    const { user, password, fechaInicio, fechaFin } = request.data;
 
     if (!user || !password) {
       throw new HttpsError(
@@ -15,11 +21,12 @@ exports.proxySirLogin = onCall(
       "https://southamerica-west1-mi-app-inventario-e639f.cloudfunctions.net/sirLogin";
 
     try {
+      const payload = { user, password, fechaInicio, fechaFin };
       logger.info(`Proxying request for user: ${user} to ${sirLoginUrl}`);
       const response = await fetch(sirLoginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user, password }),
+        body: JSON.stringify(payload),
       });
 
       const responseData = await response.json();
@@ -56,7 +63,7 @@ exports.sirLogin = onRequest({
     return res.status(405).send("Method Not Allowed");
   }
 
-  const { user, password } = req.body;
+  const { user, password, fechaInicio, fechaFin } = req.body;
 
   if (!user || !password) {
     return res
@@ -98,16 +105,58 @@ exports.sirLogin = onRequest({
       logger.error("Login failed. URL did not change or error message found.");
       return res
         .status(401)
-        .json({ error: { message: "Login failed. Please check your credentials." } });
+        .json({ error: "Login failed. Please check your credentials." });
     }
 
-    logger.info(`Login successful. Navigated to ${newUrl}`);
-    const pageTitle = await page.title();
+    logger.info(`Login successful. Navigated to ${newUrl}, now clicking the main button.`);
+    await Promise.all([
+        page.waitForNavigation({ waitUntil: "networkidle0" }),
+        page.click('input[name="btnprincipal"]'),
+    ]);
 
+    const finalUrl = page.url();
+    logger.info(`Clicked btnprincipal, landed on ${finalUrl}`);
+
+    // If dates are provided, navigate to report and scrape data
+    if (fechaInicio && fechaFin) {
+        const formattedFechaI = fechaInicio.split('-').reverse().join('/');
+        const formattedFechaF = fechaFin.split('-').reverse().join('/');
+
+        const reportUrl = `https://sir.kfc.com.ar/inventarios/mdi/reporte_mdi.php?accion=Reporte&restaurante=19&fechaI=${formattedFechaI}&fechaF=${formattedFechaF}`;
+        logger.info(`Navigating to report URL: ${reportUrl}`);
+
+        await page.goto(reportUrl, { waitUntil: "networkidle0" });
+
+        const reportData = await page.evaluate(() => {
+            const table = document.querySelector('.tabla');
+            if (!table) return [];
+
+            const headers = Array.from(table.querySelectorAll('tr[bgcolor="#666666"] td')).map(header => header.innerText.trim());
+            const dataRows = Array.from(table.querySelectorAll('tr[bgcolor="#FFFFFF"], tr[bgcolor="#E6E6E6"]'));
+
+            return dataRows.map(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                const rowData = {};
+                headers.forEach((header, index) => {
+                    if (cells[index]) {
+                        const text = cells[index].innerText.trim();
+                        const numberVal = parseFloat(text.replace('.', '').replace(',', '.'));
+                        rowData[header] = isNaN(numberVal) || text.includes('/') ? text : numberVal;
+                    }
+                });
+                return rowData;
+            });
+        });
+
+        logger.info(`Scraped ${reportData.length} items from the report.`);
+        return res.status(200).json({ status: "success", report: reportData });
+    }
+
+    // If no dates, just return the success message with the new final URL
     return res.status(200).json({
       status: "success",
-      message: `Login successful! Landed on page: ${pageTitle}`,
-      url: newUrl,
+      message: `Login successful! Landed on page: ${await page.title()}`,
+      url: finalUrl,
     });
   } catch (error) {
     logger.error("Error during Puppeteer execution:", error);
