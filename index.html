@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Control de Inventario</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,10 +12,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="desktop.css">
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4 pt-safe pb-safe">
 
-    <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] relative">
+    <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] min-h-[90vh] relative lg:max-w-none lg:rounded-none lg:h-screen lg:min-h-screen">
 
         <div id="loading-view" class="view absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <h1 class="text-2xl font-bold text-white">Conectando...</h1>
@@ -40,24 +41,24 @@
             <div id="login-error-message" class="mt-4 text-red-400 text-sm"></div>
         </div>
 
-        <div id="main-content" class="hidden flex-grow relative">
-            <div id="main-menu-view" class="view absolute inset-0 flex flex-col text-center">
-                <div class="p-4 bg-gray-900 rounded-t-xl">
+            <div id="main-menu-view" class="view hidden absolute inset-0 flex flex-col text-center lg:!relative lg:!inset-auto lg:min-h-0">
+                <div class="p-4 bg-gray-900 rounded-t-xl lg:rounded-none">
                     <p class="text-xs text-gray-400">Sesión iniciada como:</p>
                     <p id="user-email" class="text-sm font-semibold truncate"></p>
                 </div>
-                <div class="flex-grow flex flex-col items-center overflow-y-auto py-4">
+                <div class="flex-grow flex flex-col items-center overflow-y-auto py-4 min-h-0">
                     <h1 class="text-4xl md:text-5xl font-bold text-white mb-8">Inventario KFC</h1>
                     <div class="w-full grid gap-3 sm:grid-cols-2 px-4">
                         <button id="continue-inventory-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Inventario</button>
                         <button id="continue-order-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg">Continuar Pedido</button>
                         <button id="start-new-inventory-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Nuevo Inventario</button>
-                        <button id="make-order-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Hacer Pedido</button>
+                        <button id="make-order-btn" class="btn-touch w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Hacer Pedido</button>
                         <button id="consumption-report-btn" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-4 rounded-lg">Reporte de Consumo</button>
                         <button id="item-history-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg">Historial de Ítems</button>
                         <button id="history-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Ver Historial</button>
                         <button id="manage-items-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Gestionar Ítems</button>
                     </div>
+                    <p id="last-order-hint" class="text-xs text-gray-400 text-center mt-2 px-4 w-full"></p>
 
                     <div class="mt-6 p-4 border-t border-gray-700 space-y-3">
                         <h3 class="text-lg font-semibold text-gray-300">Obtener Datos de SIR</h3>
@@ -104,6 +105,8 @@
                 </div>
             </div>
 
+        <div id="main-content" class="hidden flex-grow relative flex flex-col min-h-0 lg:min-h-0 lg:overflow-hidden">
+            <div id="connection-status-bar" class="hidden shrink-0 text-center text-xs font-medium py-1.5 px-3 mx-2 mt-1 rounded-lg border z-30 bg-gray-900/95" role="status"></div>
             <div id="item-history-setup-view" class="view hidden absolute inset-0 flex flex-col h-full">
                 <div class="flex items-center justify-between mb-4">
                     <button id="back-to-menu-from-item-history-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
@@ -251,53 +254,54 @@
                 </div>
             </div>
 
-            <div id="order-item-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                <div class="flex-grow flex flex-col items-center justify-between text-center py-4">
-                    <div id="recent-order-history" class="w-full px-4">
+            <div id="order-item-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0">
+                <div class="flex-grow flex flex-col items-center justify-between text-center py-4 overflow-y-auto min-h-0">
+                    <div id="recent-order-history" class="w-full px-4 shrink-0">
                         <h3 class="text-lg font-semibold text-gray-300 mb-2">Últimos Pedidos</h3>
                         <div id="recent-order-history-list" class="space-y-2">
                             <!-- History will be injected here by JS -->
                         </div>
                     </div>
-                    <div>
+                    <div class="w-full px-4 shrink-0">
                         <p id="order-item-counter" class="text-sm font-medium text-blue-400 mb-2">Ítem 1/123</p>
-                        <h1 id="order-item-name" class="text-3xl font-bold mb-2 text-gray-100">Nombre del Ítem</h1>
+                        <h1 id="order-item-name" class="text-2xl md:text-3xl font-bold mb-2 text-gray-100 break-words">Nombre del Ítem</h1>
                         <div id="order-item-usage-container" class="hidden text-center mb-4">
                             <p class="text-sm text-teal-400">Uso Promedio: <span id="order-item-usage" class="font-bold"></span></p>
                         </div>
-                        <div class="flex items-center justify-center gap-4 w-full mb-6">
-                            <div class="flex flex-col items-center gap-2">
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 w-full max-w-xl mx-auto mb-6">
+                            <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-center">
                                 <div class="text-center">
                                     <label class="block text-sm font-medium text-gray-400">Stock Actual</label>
-                                    <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-32">0</div>
+                                    <div id="order-item-stock" class="bg-gray-700 text-white text-2xl p-4 rounded-lg w-full max-w-[10rem] mx-auto">0</div>
                                 </div>
                                 <div id="order-item-already-ordered-container" class="text-center hidden">
                                     <label class="block text-xs font-medium text-gray-400">Ya Pedido</label>
-                                    <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-lg p-1 rounded-lg w-24">0</div>
+                                    <div id="order-item-already-ordered" class="bg-yellow-700 text-white text-lg p-1 rounded-lg w-24 mx-auto">0</div>
                                 </div>
                             </div>
-                            <div class="text-center">
+                            <div class="text-center w-full md:w-auto">
                                 <label class="block text-sm font-medium text-gray-400">Cantidad a Pedir</label>
-                                <input type="number" step="0.01" id="order-item-quantity" placeholder="Pedir" class="bg-gray-600 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-500 w-32">
+                                <input type="number" step="0.01" id="order-item-quantity" placeholder="Pedir" class="bg-gray-600 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-500 w-full max-w-[10rem] mx-auto min-h-[44px]">
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-auto grid grid-cols-3 gap-2">
-                    <button id="order-no-pedir-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-2 rounded-lg text-sm">No Pedir</button>
-                    <button id="order-skip-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Saltar</button>
-                    <button id="order-next-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Siguiente</button>
+                <div class="mt-auto grid grid-cols-3 gap-2 shrink-0 pb-1">
+                    <button id="order-no-pedir-btn" class="btn-touch w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-2 rounded-lg text-sm">No Pedir</button>
+                    <button id="order-skip-btn" class="btn-touch w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Saltar</button>
+                    <button id="order-next-btn" class="btn-touch w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Siguiente</button>
                 </div>
             </div>
 
-            <div id="order-summary-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                <div class="flex items-center justify-between mb-4">
+            <div id="order-summary-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0">
+                <div class="flex items-center justify-between mb-4 shrink-0">
                     <button id="back-to-order-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
                     <h1 id="order-summary-title" class="text-xl font-bold text-center text-gray-100">Resumen de Pedido</h1>
                     <div class="w-8"></div>
                 </div>
-                 <input type="search" id="order-summary-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
-                <div id="order-summary-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
+                 <input type="search" id="order-summary-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600 shrink-0">
+                <div id="order-summary-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
+                <div id="order-summary-footer-totals" class="shrink-0 mt-3 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-1 hidden"></div>
             </div>
 
             <div id="edit-order-view" class="view hidden absolute inset-0 flex flex-col h-full">
@@ -331,35 +335,35 @@
                 <button id="start-counting-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Comenzar</button>
             </div>
 
-            <div id="item-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                <div class="flex-grow flex flex-col items-center justify-between text-center py-4">
-                    <div id="recent-inventory-history" class="w-full px-4">
+            <div id="item-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0">
+                <div class="flex-grow flex flex-col items-center justify-between text-center py-4 overflow-y-auto min-h-0">
+                    <div id="recent-inventory-history" class="w-full px-4 shrink-0">
                         <h3 class="text-lg font-semibold text-gray-300 mb-2">Últimos ingresos del ítem</h3>
                         <div id="recent-inventory-history-list" class="space-y-2">
                             <!-- History will be injected here by JS -->
                         </div>
                     </div>
-                    <div>
+                    <div class="w-full px-4 shrink-0 mt-4">
                         <p id="item-counter" class="text-sm font-medium text-indigo-400 mb-2">Ítem 1/123</p>
-                        <h1 id="item-name" class="text-3xl font-bold mb-6 text-gray-100">Nombre del Ítem</h1>
-                        <input type="number" step="0.01" id="item-quantity" placeholder="Ingresa la cantidad" class="w-full bg-gray-700 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-600">
+                        <h1 id="item-name" class="text-2xl md:text-3xl font-bold mb-6 text-gray-100 break-words">Nombre del Ítem</h1>
+                        <input type="number" step="0.01" id="item-quantity" placeholder="Ingresa la cantidad" class="w-full max-w-sm mx-auto bg-gray-700 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-600 min-h-[44px]">
                     </div>
                 </div>
-                <div class="mt-auto grid grid-cols-3 gap-2">
-                    <button id="na-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-2 rounded-lg text-sm">N/A</button>
-                    <button id="skip-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Saltar</button>
-                    <button id="next-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Siguiente</button>
+                <div class="mt-auto grid grid-cols-3 gap-2 shrink-0 pb-1">
+                    <button id="na-btn" class="btn-touch w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-2 rounded-lg text-sm">N/A</button>
+                    <button id="skip-btn" class="btn-touch w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Saltar</button>
+                    <button id="next-btn" class="btn-touch w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-2 rounded-lg text-sm">Siguiente</button>
                 </div>
             </div>
 
-            <div id="summary-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                <div class="flex items-center justify-between mb-4">
+            <div id="summary-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0">
+                <div class="flex items-center justify-between mb-4 shrink-0">
                     <button id="back-to-count-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
                     <h1 class="text-2xl font-bold text-center text-gray-100">Resumen</h1>
                     <div class="w-8"></div>
                 </div>
-                <input type="search" id="inventory-summary-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
-                <div id="summary-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
+                <input type="search" id="inventory-summary-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600 shrink-0">
+                <div id="summary-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
             </div>
 
             <div id="history-view" class="view hidden absolute inset-0 flex flex-col h-full">
@@ -368,31 +372,42 @@
                     <h1 class="text-2xl font-bold text-center text-gray-100">Historial</h1>
                     <div class="w-8"></div>
                 </div>
-                <div id="history-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
+                <input type="search" id="history-search" placeholder="Buscar por fecha o texto..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
+                <div id="history-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
             </div>
 
             <div id="history-detail-view" class="view hidden absolute inset-0 flex flex-col h-full">
                  <div class="flex items-center justify-between mb-4">
                     <button id="back-to-history-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
                     <h1 id="history-detail-title" class="text-xl font-bold text-center text-gray-100">Detalle</h1>
-                    <button id="history-detail-pdf-btn" class="bg-indigo-600 px-3 py-1 rounded-lg text-sm">PDF</button>
+                     <button id="history-detail-pdf-btn" class="bg-indigo-600 px-3 py-1 rounded-lg text-sm">PDF</button>
+                     <button id="history-detail-excel-btn" class="bg-teal-600 px-3 py-1 rounded-lg text-sm ml-1">Excel</button>
                 </div>
-                <div id="history-detail-list" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
+                <div id="history-detail-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-2 min-h-0"></div>
             </div>
 
-            <div id="manage-items-view" class="view hidden absolute inset-0 flex flex-col h-full">
-                 <div class="flex items-center justify-between mb-4">
+            <div id="manage-items-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0">
+                 <div class="flex items-center justify-between mb-4 shrink-0">
                     <button id="back-to-menu-from-manage-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
                     <h1 class="text-2xl font-bold text-center text-gray-100">Gestionar Ítems</h1>
                     <div class="w-8"></div>
                 </div>
-                 <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600">
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600">
-                    <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold">+</button>
+                 <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600 shrink-0">
+                <div class="flex flex-col sm:flex-row gap-2 mb-4 shrink-0">
+                    <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                    <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold min-h-[44px] shrink-0">+</button>
                 </div>
-                <div id="manage-items-list" class="flex-grow overflow-y-auto pr-2 space-y-3"></div>
-                <button id="save-item-order-btn" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Guardar Orden</button>
+                <div class="flex flex-col sm:flex-row gap-2 mb-3 shrink-0">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="file" id="items-excel-upload" class="hidden" accept=".xlsx,.xlsm,.xls">
+                        <span class="flex items-center justify-center w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-center text-sm">Importar lista desde Excel</span>
+                    </label>
+                    <button type="button" id="items-excel-diff-cancel-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-sm">Ocultar comparación</button>
+                </div>
+                <p class="text-xs text-gray-400 mb-2 shrink-0">Usa la misma hoja y columna de ítem que en opciones Excel de usos (si existe esa columna en la primera fila).</p>
+                <div id="items-excel-diff-panel" class="hidden mb-4 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-3 max-h-[40vh] overflow-y-auto shrink-0"></div>
+                <div id="manage-items-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
+                <button id="save-item-order-btn" class="mt-4 shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar Orden</button>
             </div>
 
             <div id="excel-config-view" class="view hidden absolute inset-0 flex flex-col h-full p-4 bg-gray-800">
@@ -419,30 +434,33 @@
                 </div>
             </div>
 
-            <div id="finished-view" class="view hidden absolute inset-0 flex-col h-full items-center justify-center text-center">
+            <div id="finished-view" class="view hidden absolute inset-0 flex flex-col h-full items-center justify-center text-center">
                  <h1 class="text-3xl font-bold mb-4 text-green-400">¡Inventario Completo!</h1>
                  <p class="text-gray-300 mb-6">Conteo finalizado. Puedes guardarlo o descargarlo.</p>
                  <div class="w-full space-y-4">
                     <button id="save-and-finish-btn" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg">Guardar y Finalizar</button>
                     <button id="final-download-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Descargar PDF</button>
+                    <button id="final-export-excel-btn" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-lg">Exportar Excel</button>
                  </div>
             </div>
 
-            <div id="order-finished-view" class="view hidden absolute inset-0 flex-col h-full items-center justify-center text-center">
+            <div id="order-finished-view" class="view hidden absolute inset-0 flex flex-col h-full items-center justify-center text-center">
                  <h1 class="text-3xl font-bold mb-4 text-blue-400">¡Pedido Completo!</h1>
                  <p class="text-gray-300 mb-6">Has ingresado todos los ítems del pedido.</p>
                  <div class="w-full space-y-4">
                     <button id="save-order-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Guardar Pedido</button>
                     <button id="order-finished-download-pdf-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Descargar PDF</button>
+                    <button id="order-finished-export-excel-btn" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-lg">Exportar Excel</button>
                  </div>
             </div>
         </div>
 
-        <div id="nav-buttons" class="mt-auto p-4 flex justify-center space-x-2" style="display: none;">
-            <button id="discard-progress-btn" class="bg-red-800 hover:bg-red-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Descartar</button>
-            <button data-context="inventory" id="summary-btn" class="bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">Resumen</button>
-            <button data-context="inventory" id="download-pdf-btn" class="bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">PDF</button>
-            <button id="save-and-exit-btn" class="bg-indigo-800 hover:bg-indigo-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Guardar y Salir</button>
+        <div id="nav-buttons" class="mt-auto p-4 flex flex-wrap justify-center gap-2 pb-safe" style="display: none;">
+            <button id="discard-progress-btn" class="btn-touch bg-red-800 hover:bg-red-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Descartar</button>
+            <button data-context="inventory" id="summary-btn" class="btn-touch bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">Resumen</button>
+            <button data-context="inventory" id="download-pdf-btn" class="btn-touch bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-medium py-2 px-4 rounded-lg">PDF</button>
+            <button data-context="inventory" id="export-excel-nav-btn" class="btn-touch bg-teal-800 hover:bg-teal-700 text-sm text-white font-medium py-2 px-4 rounded-lg">Excel</button>
+            <button id="save-and-exit-btn" class="btn-touch bg-indigo-800 hover:bg-indigo-700 text-sm text-white font-bold py-2 px-4 rounded-lg">Guardar y Salir</button>
         </div>
     </div>
 
@@ -462,7 +480,7 @@
     <script src="utils.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, writeBatch, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-functions.js";
 
@@ -495,7 +513,10 @@
                 itemColumn: 'ITEM',
                 usageColumn: 'USO'
             },
-            itemUsageData: {}
+            itemUsageData: {},
+            alwaysNaItems: [],
+            consumptionMismatches: [],
+            cachedAlreadyOrderedByItemName: null
         };
         let itemsToCountQueue = [];
         let positionInQueue = -1;
@@ -508,6 +529,8 @@
         let isLoginMode = true;
         let tempRemitoItems = [];
         let draggedItemIndex = null;
+        let historyDetailEntryIndex = null;
+        let itemsExcelImportDraft = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const allViews = document.querySelectorAll('.view');
@@ -667,6 +690,17 @@
                 sirFechaFin: document.getElementById('sir-fecha-fin'),
                 fetchSirReportBtn: document.getElementById('fetch-sir-report-btn'),
                 sirReportOutput: document.getElementById('sir-report-output'),
+                exportExcelNavBtn: document.getElementById('export-excel-nav-btn'),
+                finalExportExcelBtn: document.getElementById('final-export-excel-btn'),
+                orderFinishedExportExcelBtn: document.getElementById('order-finished-export-excel-btn'),
+                historyDetailExcelBtn: document.getElementById('history-detail-excel-btn'),
+                historySearch: document.getElementById('history-search'),
+                connectionStatusBar: document.getElementById('connection-status-bar'),
+                lastOrderHint: document.getElementById('last-order-hint'),
+                itemsExcelUpload: document.getElementById('items-excel-upload'),
+                itemsExcelDiffPanel: document.getElementById('items-excel-diff-panel'),
+                itemsExcelDiffCancelBtn: document.getElementById('items-excel-diff-cancel-btn'),
+                orderSummaryFooterTotals: document.getElementById('order-summary-footer-totals'),
             };
 
             const refs = {
@@ -679,6 +713,118 @@
                 historyDoc: (id) => doc(db, 'users', userId, 'history', String(id))
             };
 
+            function normalizeCatalogKey(name) {
+                return String(name ?? '').trim().toUpperCase();
+            }
+
+            async function persistMasterItems() {
+                if (!userId) return;
+                await setDoc(refs.masterItems(), { items: state.masterItems, alwaysNaItems: state.alwaysNaItems });
+            }
+
+            function itemIsAlwaysNa(name) {
+                return state.alwaysNaItems.includes(normalizeCatalogKey(name));
+            }
+
+            function rebuildAlreadyOrderedCache() {
+                state.cachedAlreadyOrderedByItemName = new Map();
+                if (!state.currentOrder) return;
+                const baseInventory = state.history.find(h => h.id === state.currentOrder.baseInventoryId);
+                if (!baseInventory) return;
+                const newOrderDate = new Date(state.currentOrder.orderForDate);
+                const baseInventoryDate = new Date(baseInventory.date);
+                state.currentOrder.items.forEach(line => {
+                    state.cachedAlreadyOrderedByItemName.set(line.name, 0);
+                });
+                const previousOrders = state.history.filter(h =>
+                    h.type === 'order' &&
+                    h.baseInventoryId === state.currentOrder.baseInventoryId &&
+                    new Date(h.orderForDate) < newOrderDate &&
+                    new Date(h.orderForDate) > baseInventoryDate
+                );
+                previousOrders.forEach(order => {
+                    order.items.forEach(line => {
+                        if (typeof line.toOrder === 'number' && state.cachedAlreadyOrderedByItemName.has(line.name)) {
+                            const prev = state.cachedAlreadyOrderedByItemName.get(line.name) || 0;
+                            state.cachedAlreadyOrderedByItemName.set(line.name, prev + line.toOrder);
+                        }
+                    });
+                });
+            }
+
+            function updateConnectionStatusBar() {
+                const bar = el.connectionStatusBar;
+                if (!bar) return;
+                const online = navigator.onLine;
+                if (!online) {
+                    bar.textContent = 'Sin conexión — los cambios pueden no guardarse hasta recuperar la red.';
+                    bar.className = 'shrink-0 text-center text-xs font-medium py-1.5 px-3 mx-2 mt-1 rounded-lg border z-30 bg-red-900/90 border-red-600 text-red-100';
+                    bar.classList.remove('hidden');
+                } else {
+                    bar.classList.add('hidden');
+                }
+            }
+
+            function updateMainMenuOrderHint() {
+                const hint = el.lastOrderHint;
+                if (!hint) return;
+                const orders = state.history.filter(h => h.type === 'order').sort((a, b) => new Date(b.orderForDate || b.date) - new Date(a.orderForDate || a.date));
+                if (!orders.length) {
+                    hint.textContent = '';
+                    return;
+                }
+                const d = new Date(orders[0].orderForDate || orders[0].date);
+                d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+                hint.textContent = `Último pedido guardado: ${d.toLocaleDateString('es-AR')}`;
+            }
+
+            function entryDateStamp(entry, type) {
+                const raw = type === 'order' ? entry.orderForDate : entry.date;
+                if (!raw) return new Date().toISOString().split('T')[0];
+                try {
+                    const d = new Date(raw);
+                    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+                    return d.toISOString().split('T')[0];
+                } catch {
+                    return new Date().toISOString().split('T')[0];
+                }
+            }
+
+            function handleExportExcel(entry, type) {
+                if (!entry || !entry.items) return alert('No hay datos para exportar.');
+                const isDetail = typeof type === 'string' && type.startsWith('detail-');
+                const baseType = isDetail ? type.replace('detail-', '') : type;
+                let rows;
+                let sheetName;
+                let prefix;
+                if (baseType === 'order') {
+                    rows = [['Ítem', 'Stock', 'Pedido', 'Recibido']];
+                    entry.items.forEach(item => {
+                        if (item.toOrder !== null && item.toOrder !== 'NO PEDIR') {
+                            const pedido = typeof item.toOrder === 'number' ? item.toOrder : '';
+                            const rec = item.received !== undefined && item.received !== null ? item.received : '';
+                            rows.push([item.name, item.stock ?? '', pedido, rec]);
+                        }
+                    });
+                    if (rows.length <= 1) return alert('No hay líneas de pedido para exportar.');
+                    sheetName = 'Pedido';
+                    prefix = isDetail ? 'detalle_pedido' : 'pedido';
+                } else {
+                    rows = [['Ítem', 'Cantidad']];
+                    entry.items.filter(item => item.quantity !== null && item.quantity !== undefined).forEach(item => {
+                        rows.push([item.name, item.quantity === 'N/A' ? 'N/A' : item.quantity]);
+                    });
+                    if (rows.length <= 1) return alert('No hay ítems para exportar.');
+                    sheetName = 'Inventario';
+                    prefix = isDetail ? 'detalle_inventario' : 'inventario';
+                }
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
+                const dateStr = entryDateStamp(entry, baseType === 'order' ? 'order' : 'inventory');
+                XLSX.writeFile(wb, `${prefix}_${dateStr}.xlsx`);
+            }
+
             onAuthStateChanged(auth, user => {
                 if (user) {
                     userId = user.uid;
@@ -688,9 +834,13 @@
                     unsubscribe.masterItems = onSnapshot(refs.masterItems(), (docSnap) => {
                         if (docSnap.exists() && docSnap.data().items) {
                             state.masterItems = docSnap.data().items;
+                            state.alwaysNaItems = Array.isArray(docSnap.data().alwaysNaItems)
+                                ? docSnap.data().alwaysNaItems.map(normalizeCatalogKey)
+                                : [];
                         } else {
-                            setDoc(refs.masterItems(), { items: initialItemsList });
+                            setDoc(refs.masterItems(), { items: initialItemsList, alwaysNaItems: [] });
                             state.masterItems = initialItemsList;
+                            state.alwaysNaItems = [];
                         }
                     });
 
@@ -723,6 +873,8 @@
                         querySnapshot.forEach((doc) => {
                             state.history.push({ ...doc.data(), id: doc.id });
                         });
+                        updateMainMenuOrderHint();
+                        rebuildAlreadyOrderedCache();
                     });
 
                     unsubscribe.excelConfig = onSnapshot(refs.excelConfig(), (docSnap) => {
@@ -735,20 +887,27 @@
 
                     el.loadingView.classList.add('hidden');
                     el.loginView.classList.add('hidden');
+                    el.mainMenu.classList.remove('hidden');
                     el.mainContent.classList.remove('hidden');
                     switchView(el.mainMenu);
+                    updateConnectionStatusBar();
 
                 } else {
                     userId = null;
                     Object.values(unsubscribe).forEach(unsub => unsub());
                     el.loadingView.classList.add('hidden');
+                    el.mainMenu.classList.add('hidden');
                     el.mainContent.classList.add('hidden');
                     el.loginView.classList.remove('hidden');
                 }
             });
 
             function switchView(viewToShow) {
-                allViews.forEach(v => v.classList.add('hidden'));
+                const keepMenuOnDesktop = typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches;
+                allViews.forEach(v => {
+                    if (keepMenuOnDesktop && v.id === 'main-menu-view') return;
+                    v.classList.add('hidden');
+                });
                 viewToShow.classList.remove('hidden');
                 let showNav = false;
                 if (appMode === 'inventory' && ([el.item, el.summary].includes(viewToShow))) {
@@ -830,16 +989,16 @@
                     const baseInventory = state.history.find(h => h.id === state.currentOrder.baseInventoryId);
 
                     let alreadyOrdered = 0;
-                    if (baseInventory) {
+                    if (state.cachedAlreadyOrderedByItemName && state.cachedAlreadyOrderedByItemName.has(item.name)) {
+                        alreadyOrdered = state.cachedAlreadyOrderedByItemName.get(item.name) || 0;
+                    } else if (baseInventory) {
                         const baseInventoryDate = new Date(baseInventory.date);
-
                         const previousOrders = state.history.filter(h =>
                             h.type === 'order' &&
                             h.baseInventoryId === state.currentOrder.baseInventoryId &&
                             new Date(h.orderForDate) < newOrderDate &&
                             new Date(h.orderForDate) > baseInventoryDate
                         );
-
                         previousOrders.forEach(order => {
                             const orderedItem = order.items.find(i => i.name === item.name);
                             if (orderedItem && typeof orderedItem.toOrder === 'number') {
@@ -933,7 +1092,10 @@
                 const doc = new jsPDF();
                 if (!entry || !entry.items) return alert('No hay datos para generar el PDF.');
 
-                if (type === 'order') {
+                const isDetail = typeof type === 'string' && type.startsWith('detail-');
+                const baseType = isDetail ? type.replace('detail-', '') : type;
+
+                if (baseType === 'order') {
                     const tableData = entry.items.filter(item => item.toOrder !== null && item.toOrder !== 'NO PEDIR' && typeof item.toOrder === 'number').map(item => [item.name, item.toOrder]);
                     if (tableData.length === 0) return alert('No hay items en el pedido para generar el PDF.');
                     const orderForDate = new Date(entry.orderForDate);
@@ -942,24 +1104,27 @@
                     doc.autoTable({ head: [['Ítem', 'Cantidad']], body: tableData, startY: 35 });
 
                     const totalItems = tableData.length;
-                    const totalBultos = tableData.reduce((sum, item) => sum + item[1], 0);
+                    const totalBultos = tableData.reduce((sum, row) => sum + row[1], 0);
                     const finalY = doc.autoTable.previous.finalY;
 
                     doc.text(`Cantidad de items: ${totalItems}`, 14, finalY + 10);
                     doc.text(`Cantidad de bultos: ${totalBultos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 14, finalY + 17);
 
-                } else {
-                    const countedItems = entry.items.filter(item => item.quantity !== null);
-                    if (countedItems.length === 0) return alert('No hay items con cantidad para generar el PDF.');
-                    const tableData = countedItems.map(item => [item.name, item.quantity]);
-                    const inventoryDate = new Date(entry.date);
-                    inventoryDate.setMinutes(inventoryDate.getMinutes() + inventoryDate.getTimezoneOffset());
-                    doc.text("Resumen de Inventario", 14, 22);
-                    doc.text(`Fecha: ${inventoryDate.toLocaleDateString('es-AR')} - Momento: ${entry.timeOfDay}`, 14, 30);
-                    doc.autoTable({ head: [['Ítem', 'Cantidad']], body: tableData, startY: 35 });
+                    const dateStr = entryDateStamp(entry, 'order');
+                    doc.save(`${isDetail ? 'detalle_pedido' : 'pedido'}_${dateStr}.pdf`);
+                    return;
                 }
-                const dateStr = new Date().toISOString().split('T')[0];
-                doc.save(`documento_${dateStr}.pdf`);
+
+                const countedItems = entry.items.filter(item => item.quantity !== null);
+                if (countedItems.length === 0) return alert('No hay items con cantidad para generar el PDF.');
+                const tableData = countedItems.map(item => [item.name, item.quantity]);
+                const inventoryDate = new Date(entry.date);
+                inventoryDate.setMinutes(inventoryDate.getMinutes() + inventoryDate.getTimezoneOffset());
+                doc.text('Resumen de Inventario', 14, 22);
+                doc.text(`Fecha: ${inventoryDate.toLocaleDateString('es-AR')} - Momento: ${entry.timeOfDay}`, 14, 30);
+                doc.autoTable({ head: [['Ítem', 'Cantidad']], body: tableData, startY: 35 });
+                const dateStrInv = entryDateStamp(entry, 'inventory');
+                doc.save(`${isDetail ? 'detalle_inventario' : 'inventario'}_${dateStrInv}.pdf`);
             }
 
             function renderSummaryList(searchTerm = '') {
@@ -1016,16 +1181,38 @@
                 });
             }
 
-            function renderHistoryList(forSelection) {
+            function renderHistoryList(forSelection, filterText) {
                 const listElement = forSelection ? el.selectInventoryList : el.historyList;
                 listElement.innerHTML = '';
-                const inventories = state.history.filter(h => h.type === 'inventory').sort((a,b) => new Date(b.date) - new Date(a.date));
+                const qRaw = filterText !== undefined && filterText !== null ? filterText : (el.historySearch?.value ?? '');
+                const q = String(qRaw).trim().toLowerCase();
+
+                function inventoryMatchesFilter(inv) {
+                    if (!q) return true;
+                    const inventoryDate = new Date(inv.date);
+                    inventoryDate.setMinutes(inventoryDate.getMinutes() + inventoryDate.getTimezoneOffset());
+                    const blob = [
+                        inventoryDate.toLocaleDateString('es-AR'),
+                        String(inv.timeOfDay || ''),
+                        'inventario'
+                    ].join(' ').toLowerCase();
+                    if (blob.includes(q)) return true;
+                    const relatedOrders = state.history.filter(h => h.type === 'order' && String(h.baseInventoryId) === String(inv.id));
+                    return relatedOrders.some(order => {
+                        const orderDate = new Date(order.orderForDate);
+                        orderDate.setMinutes(orderDate.getMinutes() + orderDate.getTimezoneOffset());
+                        return [orderDate.toLocaleDateString('es-AR'), 'pedido'].join(' ').toLowerCase().includes(q);
+                    });
+                }
+
+                const inventories = state.history.filter(h => h.type === 'inventory')
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .filter(inv => forSelection ? true : inventoryMatchesFilter(inv));
 
                 if (inventories.length === 0) {
                     listElement.innerHTML = `<p class="text-gray-400 text-center">No hay ${forSelection ? 'inventarios' : 'registros'} guardados.</p>`;
                     return;
                 }
-
                 inventories.forEach((inv) => {
                     const details = document.createElement('details');
                     details.className = 'bg-gray-700 rounded-lg';
@@ -1153,6 +1340,7 @@
 
 
             function renderHistoryDetailList(historyIndex) {
+                historyDetailEntryIndex = historyIndex;
                 const entry = state.history[historyIndex];
                 if (!entry) return;
                 const isOrder = entry.type === 'order';
@@ -1198,12 +1386,16 @@
                         el.historyDetailList.appendChild(listItem);
                     }
                 });
-                el.historyDetailPdfBtn.onclick = () => handleDownloadPdf(entry, isOrder ? 'order' : 'inventory');
+                el.historyDetailPdfBtn.onclick = () => handleDownloadPdf(entry, isOrder ? 'detail-order' : 'detail-inventory');
+                el.historyDetailExcelBtn.onclick = () => handleExportExcel(entry, isOrder ? 'detail-order' : 'detail-inventory');
             }
 
             function renderOrderSummaryList(searchTerm = '') {
                 el.orderSummaryList.innerHTML = '';
-                if (!state.currentOrder) return;
+                if (!state.currentOrder) {
+                    el.orderSummaryFooterTotals?.classList.add('hidden');
+                    return;
+                }
 
                 const orderForDate = new Date(state.currentOrder.orderForDate);
                 orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
@@ -1267,6 +1459,22 @@
                     listItem.appendChild(controlsWrapper);
                     el.orderSummaryList.appendChild(listItem);
                 });
+
+                const foot = el.orderSummaryFooterTotals;
+                if (foot && state.currentOrder) {
+                    let totalLines = 0;
+                    let totalBultos = 0;
+                    state.currentOrder.items.forEach(item => {
+                        if (item.toOrder !== null && item.toOrder !== 'NO PEDIR' && typeof item.toOrder === 'number') {
+                            totalLines++;
+                            totalBultos += item.toOrder;
+                        }
+                    });
+                    foot.classList.remove('hidden');
+                    foot.innerHTML = `
+                        <div class="flex justify-between font-semibold text-gray-200"><span>Ítems con cantidad</span><span>${totalLines}</span></div>
+                        <div class="flex justify-between text-gray-300"><span>Bultos totales</span><span class="font-bold text-white">${totalBultos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>`;
+                }
             }
 
             function renderEditOrderView(orderId) {
@@ -1289,7 +1497,7 @@
                         listItem.innerHTML = `
                             <span>${item.name}</span>
                             <div class="text-right bg-gray-600 p-2 rounded-md">${item.toOrder}</div>
-                            <input type="number" step="0.01" value="${item.received ?? item.toOrder}" data-index="${index}" class="w-full bg-gray-600 text-white text-center p-2 rounded-md border border-gray-500">
+                            <input type="number" step="0.01" min="0" value="${item.received ?? item.toOrder}" data-index="${index}" class="edit-received-input w-full bg-gray-600 text-white text-center p-2 rounded-md border border-gray-500">
                         `;
                         el.editOrderList.appendChild(listItem);
                     }
@@ -1325,28 +1533,51 @@
                     name.toLowerCase().includes(searchTerm.toLowerCase())
                 );
 
-                filteredItems.forEach((name, index) => {
+                filteredItems.forEach((name) => {
                     const originalIndex = state.masterItems.indexOf(name);
                     const listItem = document.createElement('div');
-                    listItem.className = 'manage-item-row bg-gray-700 p-3 rounded-lg flex justify-between items-center gap-2';
+                    listItem.className = 'manage-item-row bg-gray-700 p-3 rounded-lg flex flex-wrap justify-between items-center gap-2';
                     listItem.setAttribute('draggable', true);
                     listItem.dataset.index = originalIndex;
 
-                    const dragHandle = `<span class="drag-handle text-gray-400 cursor-grab">&#x2630;</span>`;
+                    const dragWrap = document.createElement('span');
+                    dragWrap.className = 'drag-handle drag-handle-touch text-gray-400 cursor-grab select-none';
+                    dragWrap.title = 'Arrastrar para reordenar';
+                    dragWrap.textContent = '☰';
 
                     const nameContainer = document.createElement('div');
-                    nameContainer.className = 'flex-grow';
+                    nameContainer.className = 'flex-grow min-w-[120px]';
                     nameContainer.innerHTML = `<span class="item-name-text">${name}</span>
-                                               <input type="text" class="item-name-input hidden w-full bg-gray-600 p-1 rounded-md" value="${name}">`;
+                                               <input type="text" class="item-name-input hidden w-full bg-gray-600 p-2 rounded-md mt-1" value="${name.replace(/"/g, '&quot;')}">`;
+
+                    const naLabel = document.createElement('label');
+                    naLabel.className = 'flex items-center gap-2 text-xs text-gray-300 shrink-0 cursor-pointer';
+                    const naCb = document.createElement('input');
+                    naCb.type = 'checkbox';
+                    naCb.checked = itemIsAlwaysNa(name);
+                    naCb.title = 'En nuevos inventarios / pedidos: N/A o No pedir automático';
+                    naCb.addEventListener('change', async () => {
+                        const k = normalizeCatalogKey(name);
+                        if (naCb.checked) {
+                            if (!state.alwaysNaItems.includes(k)) state.alwaysNaItems.push(k);
+                        } else {
+                            state.alwaysNaItems = state.alwaysNaItems.filter(x => x !== k);
+                        }
+                        await persistMasterItems();
+                        showToast(naCb.checked ? 'N/A por defecto activado.' : 'N/A por defecto desactivado.');
+                    });
+                    naLabel.appendChild(naCb);
+                    naLabel.appendChild(document.createTextNode(' N/A'));
 
                     const buttonsContainer = document.createElement('div');
-                    buttonsContainer.className = 'flex gap-2';
-                    buttonsContainer.innerHTML = `<button data-index="${originalIndex}" class="edit-item-btn bg-yellow-600 px-3 py-1 rounded-lg text-xs">Editar</button>
-                                                  <button data-index="${originalIndex}" class="save-item-btn hidden bg-green-600 px-3 py-1 rounded-lg text-xs">Guardar</button>
-                                                  <button data-index="${originalIndex}" class="delete-item-btn bg-red-600 px-3 py-1 rounded-lg text-xs font-bold">&times;</button>`;
+                    buttonsContainer.className = 'flex gap-2 flex-shrink-0';
+                    buttonsContainer.innerHTML = `<button type="button" data-index="${originalIndex}" class="edit-item-btn bg-yellow-600 px-3 py-2 rounded-lg text-xs min-h-[44px]">Editar</button>
+                                                  <button type="button" data-index="${originalIndex}" class="save-item-btn hidden bg-green-600 px-3 py-2 rounded-lg text-xs min-h-[44px]">Guardar</button>
+                                                  <button type="button" data-index="${originalIndex}" class="delete-item-btn bg-red-600 px-3 py-2 rounded-lg text-xs font-bold min-h-[44px]">&times;</button>`;
 
-                    listItem.innerHTML = dragHandle;
+                    listItem.appendChild(dragWrap);
                     listItem.appendChild(nameContainer);
+                    listItem.appendChild(naLabel);
                     listItem.appendChild(buttonsContainer);
                     el.manageItemsList.appendChild(listItem);
                 });
@@ -1378,8 +1609,14 @@
                         const newName = nameInput.value.trim().toUpperCase();
 
                         if (newName && newName !== oldName) {
+                            const ko = normalizeCatalogKey(oldName);
+                            const kn = normalizeCatalogKey(newName);
+                            if (state.alwaysNaItems.includes(ko)) {
+                                state.alwaysNaItems = state.alwaysNaItems.filter(x => x !== ko);
+                                if (!state.alwaysNaItems.includes(kn)) state.alwaysNaItems.push(kn);
+                            }
                             state.masterItems[index] = newName;
-                            await setDoc(refs.masterItems(), { items: state.masterItems });
+                            await persistMasterItems();
                             showToast('Ítem renombrado.');
                         }
                         renderManageItemsList(el.manageItemsSearch.value);
@@ -1390,8 +1627,10 @@
                     btn.addEventListener('click', async e => {
                         if (confirm('¿Seguro que quieres eliminar este ítem?')) {
                             const index = parseInt(e.target.dataset.index, 10);
+                            const removedKey = normalizeCatalogKey(state.masterItems[index]);
+                            state.alwaysNaItems = state.alwaysNaItems.filter(x => x !== removedKey);
                             state.masterItems.splice(index, 1);
-                            await setDoc(refs.masterItems(), { items: state.masterItems });
+                            await persistMasterItems();
                             showToast('Ítem eliminado.');
                             renderManageItemsList(el.manageItemsSearch.value);
                         }
@@ -1425,6 +1664,167 @@
                 });
             }
 
+            function parseExcelCatalogWorkbook(workbook) {
+                const configuredSheet = state.excelConfig.sheetName;
+                const sheetName = workbook.SheetNames.includes(configuredSheet)
+                    ? configuredSheet
+                    : workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const orderedKeys = [];
+                const keyToDisplay = new Map();
+                const seen = new Set();
+                const itemHeader = state.excelConfig.itemColumn;
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (jsonData.length > 0 && jsonData[0].hasOwnProperty(itemHeader)) {
+                    jsonData.forEach(row => {
+                        const raw = row[itemHeader];
+                        if (raw === undefined || raw === null || String(raw).trim() === '') return;
+                        const display = String(raw).trim().toUpperCase();
+                        const k = normalizeCatalogKey(display);
+                        if (!seen.has(k)) {
+                            seen.add(k);
+                            orderedKeys.push(k);
+                            keyToDisplay.set(k, display);
+                        }
+                    });
+                } else {
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    rows.forEach(r => {
+                        const cell = r && r[0];
+                        if (cell === undefined || cell === null || String(cell).trim() === '') return;
+                        const display = String(cell).trim().toUpperCase();
+                        const k = normalizeCatalogKey(display);
+                        if (!seen.has(k)) {
+                            seen.add(k);
+                            orderedKeys.push(k);
+                            keyToDisplay.set(k, display);
+                        }
+                    });
+                }
+                return { orderedKeys, keyToDisplay, sheetUsed: sheetName };
+            }
+
+            function buildItemsExcelImportDraft(parsed) {
+                const masterByKey = new Map(state.masterItems.map(n => [normalizeCatalogKey(n), n]));
+                const excelKeys = parsed.orderedKeys;
+                const excelSet = new Set(excelKeys);
+
+                const toAdd = [];
+                excelKeys.forEach(k => {
+                    if (!masterByKey.has(k)) {
+                        const warnings = [];
+                        const disp = String(parsed.keyToDisplay.get(k) || '');
+                        state.masterItems.forEach(m => {
+                            const mast = m.toUpperCase();
+                            if (disp.length >= 3 && mast.length >= 3 && stringSimilarity(disp, mast) >= 0.85 && disp !== mast) {
+                                warnings.push(m);
+                            }
+                        });
+                        toAdd.push({ key: k, display: parsed.keyToDisplay.get(k), warnings });
+                    }
+                });
+
+                const toRemove = [];
+                state.masterItems.forEach(m => {
+                    const k = normalizeCatalogKey(m);
+                    if (!excelSet.has(k)) toRemove.push({ key: k, display: m });
+                });
+
+                itemsExcelImportDraft = {
+                    orderedKeys: excelKeys,
+                    keyToDisplay: parsed.keyToDisplay,
+                    masterByKey,
+                    excelSet,
+                    toAdd,
+                    toRemove,
+                    sheetUsed: parsed.sheetUsed
+                };
+                renderItemsExcelDiffPanel();
+            }
+
+            function renderItemsExcelDiffPanel() {
+                const panel = el.itemsExcelDiffPanel;
+                const cancelBtn = el.itemsExcelDiffCancelBtn;
+                if (!panel || !itemsExcelImportDraft) return;
+                panel.classList.remove('hidden');
+                if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+                const d = itemsExcelImportDraft;
+                let html = `<p class="font-semibold text-gray-200">Hoja usada: ${d.sheetUsed}</p>`;
+                html += `<p class="text-gray-400 text-xs">${d.toAdd.length} nuevos · ${d.toRemove.length} solo en catálogo · ${d.orderedKeys.length} filas en Excel</p>`;
+
+                if (d.toAdd.length) {
+                    html += '<div><p class="font-medium text-teal-300 mt-2">En Excel, no en catálogo (elegí cuáles agregar)</p><ul class="space-y-1 mt-1">';
+                    d.toAdd.forEach(({ key, display, warnings }) => {
+                        const w = warnings.length ? `<span class="text-yellow-400 block text-xs">Similar a: ${warnings.slice(0, 3).join(', ')}${warnings.length > 3 ? '…' : ''}</span>` : '';
+                        html += `<li><label class="flex gap-2 items-start"><input type="checkbox" class="excel-add-cb rounded" data-key="${key}" checked><span>${display}${w}</span></label></li>`;
+                    });
+                    html += '</ul></div>';
+                }
+
+                if (d.toRemove.length) {
+                    html += '<div><p class="font-medium text-orange-300 mt-2">En catálogo, no en Excel (elegí cuáles quitar)</p><ul class="space-y-1 mt-1">';
+                    d.toRemove.forEach(({ key, display }) => {
+                        html += `<li><label class="flex gap-2"><input type="checkbox" class="excel-remove-cb rounded" data-key="${key}" checked><span>${display}</span></label></li>`;
+                    });
+                    html += '</ul></div>';
+                }
+
+                if (!d.toAdd.length && !d.toRemove.length) {
+                    html += '<p class="text-gray-400 mt-2">Sin diferencias: mismos ítems que el catálogo actual.</p>';
+                }
+
+                html += `<button type="button" id="apply-items-excel-btn" class="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg">Aplicar cambios seleccionados</button>`;
+                panel.innerHTML = html;
+
+                document.getElementById('apply-items-excel-btn')?.addEventListener('click', applyItemsExcelSelections);
+            }
+
+            async function applyItemsExcelSelections() {
+                if (!itemsExcelImportDraft) return;
+                const d = itemsExcelImportDraft;
+                const addKeys = new Set();
+                el.itemsExcelDiffPanel.querySelectorAll('.excel-add-cb:checked').forEach(cb => addKeys.add(cb.dataset.key));
+                const removeKeys = new Set();
+                el.itemsExcelDiffPanel.querySelectorAll('.excel-remove-cb:checked').forEach(cb => removeKeys.add(cb.dataset.key));
+
+                const newItems = [];
+                d.orderedKeys.forEach(k => {
+                    if (d.masterByKey.has(k)) {
+                        newItems.push(d.masterByKey.get(k));
+                    } else if (addKeys.has(k)) {
+                        newItems.push(d.keyToDisplay.get(k));
+                    }
+                });
+
+                state.masterItems.forEach(m => {
+                    const k = normalizeCatalogKey(m);
+                    if (!d.excelSet.has(k) && !removeKeys.has(k)) {
+                        newItems.push(m);
+                    }
+                });
+
+                const seen = new Set();
+                const deduped = [];
+                newItems.forEach(m => {
+                    const k = normalizeCatalogKey(m);
+                    if (!seen.has(k)) {
+                        seen.add(k);
+                        deduped.push(m);
+                    }
+                });
+
+                state.masterItems = deduped;
+                state.alwaysNaItems = state.alwaysNaItems.filter(k => deduped.some(m => normalizeCatalogKey(m) === k));
+                await persistMasterItems();
+                itemsExcelImportDraft = null;
+                el.itemsExcelDiffPanel.classList.add('hidden');
+                el.itemsExcelDiffPanel.innerHTML = '';
+                if (el.itemsExcelDiffCancelBtn) el.itemsExcelDiffCancelBtn.classList.add('hidden');
+                renderManageItemsList(el.manageItemsSearch.value);
+                showToast('Catálogo actualizado desde Excel.');
+            }
 
             function renderConsumptionSetup() {
                 const inventories = state.history.filter(h => h.type === 'inventory').sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -1461,6 +1861,12 @@
                 const startDate = new Date(startInv.date);
                 const endDate = new Date(endInv.date);
 
+                const startNames = new Set(startInv.items.map(i => i.name));
+                const endNames = new Set(endInv.items.map(i => i.name));
+                const mismatches = [];
+                startNames.forEach(n => { if (!endNames.has(n)) mismatches.push(`Solo en inventario inicial: ${n}`); });
+                endNames.forEach(n => { if (!startNames.has(n)) mismatches.push(`Solo en inventario final: ${n}`); });
+
                 const receivedOrders = state.history.filter(h =>
                     h.type === 'order' &&
                     new Date(h.orderForDate) > startDate &&
@@ -1492,21 +1898,22 @@
                     }
                 });
 
-                return results;
+                return { results, mismatches };
             }
 
             function renderConsumptionReport() {
                 const startId = el.startInventorySelect.value;
                 const endId = el.endInventorySelect.value;
 
-                const results = computeConsumption(startId, endId);
-                if (!results) {
+                const computed = computeConsumption(startId, endId);
+                if (!computed) {
                     alert('Asegúrate de seleccionar un inventario inicial y final válidos. La fecha inicial debe ser anterior a la final.');
                     return;
                 }
 
                 state.consumptionMode = 'single';
-                state.consumptionResults = results;
+                state.consumptionResults = computed.results;
+                state.consumptionMismatches = computed.mismatches;
                 renderConsumptionResultList('');
                 switchView(el.consumptionResult);
             }
@@ -1526,13 +1933,28 @@
                 }
 
                 state.consumptionMode = 'comparison';
-                state.consumptionComparison = { period1, period2 };
+                state.consumptionComparison = {
+                    period1: period1.results,
+                    period2: period2.results,
+                    mismatches: [...new Set([...(period1.mismatches || []), ...(period2.mismatches || [])])]
+                };
                 renderConsumptionComparisonList('');
                 switchView(el.consumptionResult);
             }
 
             function renderConsumptionResultList(searchTerm = '') {
                 el.consumptionResultList.innerHTML = '';
+                const mm = state.consumptionMode === 'comparison'
+                    ? (state.consumptionComparison?.mismatches || [])
+                    : (state.consumptionMismatches || []);
+                if (mm.length > 0) {
+                    const warn = document.createElement('div');
+                    warn.className = 'mb-3 p-3 rounded-lg bg-yellow-900/40 border border-yellow-600 text-yellow-100 text-xs space-y-1';
+                    warn.innerHTML = '<p class="font-bold">Diferencias entre listados de inventario</p><ul class="list-disc pl-4">' +
+                        mm.slice(0, 50).map(m => `<li>${m}</li>`).join('') +
+                        (mm.length > 50 ? `<li>… y ${mm.length - 50} más</li>` : '') + '</ul>';
+                    el.consumptionResultList.appendChild(warn);
+                }
                 const header = `<div class="grid grid-cols-5 gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600 text-sm sticky-header">
                                     <span class="col-span-2">Ítem</span>
                                     <span class="text-right">Inicial</span>
@@ -1540,7 +1962,7 @@
                                     <span class="text-right">Final</span>
                                     <span class="text-right">Consumo</span>
                                </div>`;
-                el.consumptionResultList.innerHTML = header;
+                el.consumptionResultList.insertAdjacentHTML('beforeend', header);
 
                 state.consumptionResults
                     .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -1558,6 +1980,15 @@
 
             function renderConsumptionComparisonList(searchTerm = '') {
                 el.consumptionResultList.innerHTML = '';
+                const mm = state.consumptionComparison?.mismatches || [];
+                if (mm.length > 0) {
+                    const warn = document.createElement('div');
+                    warn.className = 'mb-3 p-3 rounded-lg bg-yellow-900/40 border border-yellow-600 text-yellow-100 text-xs space-y-1';
+                    warn.innerHTML = '<p class="font-bold">Diferencias entre listados de inventario (uno o ambos períodos)</p><ul class="list-disc pl-4">' +
+                        mm.slice(0, 50).map(m => `<li>${m}</li>`).join('') +
+                        (mm.length > 50 ? `<li>… y ${mm.length - 50} más</li>` : '') + '</ul>';
+                    el.consumptionResultList.appendChild(warn);
+                }
                 const header = `<div class="grid gap-2 font-bold text-gray-400 px-3 pb-2 border-b border-gray-600 text-sm sticky-header" style="grid-template-columns: 2fr repeat(8, 1fr);">
                                     <span>Ítem</span>
                                     <span class="text-right">Ini 1</span>
@@ -1569,7 +2000,7 @@
                                     <span class="text-right">Fin 2</span>
                                     <span class="text-right">Cons 2</span>
                                </div>`;
-                el.consumptionResultList.innerHTML = header;
+                el.consumptionResultList.insertAdjacentHTML('beforeend', header);
 
                 const allNames = Array.from(new Set([
                     ...state.consumptionComparison.period1.map(r => r.name),
@@ -1612,11 +2043,15 @@
                 }
 
                 detectedItems.forEach(detected => {
+                    const detectedUpper = String(detected.item ?? '').trim().toUpperCase();
+                    if (detectedUpper.length < 3) return;
                     let bestMatch = null;
                     let highestScore = 0;
                     state.masterItems.forEach(masterItem => {
-                        const score = stringSimilarity(detected.item.toUpperCase(), masterItem.toUpperCase());
-                        if (score > highestScore && score > 0.7) {
+                        const m = String(masterItem).trim().toUpperCase();
+                        if (m.length < 3) return;
+                        const score = stringSimilarity(detectedUpper, m);
+                        if (score > highestScore && score > 0.75) {
                             highestScore = score;
                             bestMatch = masterItem;
                         }
@@ -1817,6 +2252,7 @@
 
             el.continueOrderBtn.addEventListener('click', () => {
                 appMode = 'order';
+                rebuildAlreadyOrderedCache();
                 itemsToCountQueue = state.currentOrder.items.map((item, index) => ({...item, originalIndex: index})).filter(item => item.toOrder === null).map(item => item.originalIndex);
                 if (itemsToCountQueue.length > 0) {
                     positionInQueue = 0;
@@ -1837,7 +2273,7 @@
 
             el.makeOrderBtn.addEventListener('click', () => {
                 appMode = 'order';
-                renderHistoryList(true);
+                renderHistoryList(true, '');
                 switchView(el.selectInventory);
             });
 
@@ -1846,7 +2282,11 @@
                 renderItemHistorySetup();
                 switchView(el.itemHistorySetupView);
             });
-            el.historyBtn.addEventListener('click', () => { renderHistoryList(false); switchView(el.history); });
+            el.historyBtn.addEventListener('click', () => {
+                if (el.historySearch) el.historySearch.value = '';
+                renderHistoryList(false, '');
+                switchView(el.history);
+            });
             el.manageItemsBtn.addEventListener('click', () => { renderManageItemsList(); switchView(el.manageItems); });
 
             function renderItemHistorySetup(searchTerm = '') {
@@ -1882,13 +2322,23 @@
                     type: 'inventory',
                     date: el.inventoryDate.value,
                     timeOfDay: el.inventoryTime.value,
-                    items: state.masterItems.map(name => ({ name, quantity: null }))
+                    items: state.masterItems.map(name => ({
+                        name,
+                        quantity: itemIsAlwaysNa(name) ? 'N/A' : null
+                    }))
                 };
                 state.currentInventory = newInventory;
-                itemsToCountQueue = state.currentInventory.items.map((_, index) => index);
+                itemsToCountQueue = state.currentInventory.items
+                    .map((item, index) => ({ item, index }))
+                    .filter(({ item }) => item.quantity === null)
+                    .map(({ index }) => index);
                 positionInQueue = 0;
                 currentIndex = itemsToCountQueue[0];
                 await setDoc(refs.currentInventory(), state.currentInventory);
+                if (itemsToCountQueue.length === 0) {
+                    switchView(el.finished);
+                    return;
+                }
                 switchView(el.item);
                 renderCurrentItem('inventory');
             });
@@ -1909,13 +2359,24 @@
                     date: new Date().toISOString(),
                     orderForDate: el.orderForDate.value,
                     baseInventoryId: baseInv.id,
-                    items: baseInv.items.map(item => ({ name: item.name, stock: item.quantity, toOrder: null, received: null }))
+                    items: baseInv.items.map(item => ({
+                        name: item.name,
+                        stock: item.quantity,
+                        toOrder: itemIsAlwaysNa(item.name) ? 'NO PEDIR' : null,
+                        received: null
+                    }))
                 };
                 appMode = 'order';
-                itemsToCountQueue = state.currentOrder.items.map((_, i) => i);
+                rebuildAlreadyOrderedCache();
+                itemsToCountQueue = state.currentOrder.items.map((item, index) => ({ ...item, originalIndex: index })).filter(item => item.toOrder === null).map(item => item.originalIndex);
                 positionInQueue = 0;
                 currentIndex = itemsToCountQueue[0];
                 await setDoc(refs.currentOrder(), state.currentOrder);
+                if (itemsToCountQueue.length === 0) {
+                    renderOrderSummaryList();
+                    switchView(el.orderSummary);
+                    return;
+                }
                 switchView(el.orderItem);
                 renderCurrentItem('order');
             });
@@ -2053,11 +2514,11 @@
             }
 
 
-            el.addItemBtn.addEventListener('click', () => {
+            el.addItemBtn.addEventListener('click', async () => {
                 const newName = el.newItemName.value.trim().toUpperCase();
                 if (newName && !state.masterItems.includes(newName)) {
                     state.masterItems.push(newName);
-                    setDoc(refs.masterItems(), { items: state.masterItems });
+                    await persistMasterItems();
                     renderManageItemsList();
                     el.newItemName.value = '';
                     showToast(`'${newName}' fue agregado.`);
@@ -2102,12 +2563,19 @@
                 const orderRef = refs.historyDoc(editingId);
                 const orderData = { ...state.history.find(h => h.id == editingId) };
 
-                el.editOrderList.querySelectorAll('input[data-index]').forEach(input => {
+                let invalid = false;
+                el.editOrderList.querySelectorAll('.edit-received-input[data-index]').forEach(input => {
                     const itemIndex = parseInt(input.dataset.index, 10);
                     const rawValue = input.value.replace(',', '.');
                     const receivedQty = rawValue !== '' ? parseFloat(rawValue) : null;
+                    if (receivedQty !== null && (isNaN(receivedQty) || receivedQty < 0)) invalid = true;
                     orderData.items[itemIndex].received = receivedQty;
                 });
+
+                if (invalid) {
+                    alert('Las cantidades recibidas deben ser números mayores o iguales a cero.');
+                    return;
+                }
 
                 await updateDoc(orderRef, { items: orderData.items });
                 showToast('Pedido actualizado!');
@@ -2180,7 +2648,7 @@
             el.discardProgressBtn.addEventListener('click', () => {
                 const type = appMode === 'inventory' ? 'inventario' : 'pedido';
                 el.confirmDeleteTitle.textContent = `¿Descartar ${type} en progreso?`;
-                el.confirmDeleteMessage.textContent = 'Toda la información de este conteo se perderá permanentemente.';
+                el.confirmDeleteMessage.textContent = 'No hay forma de recuperar este progreso. Si necesitás conservarlo, usá «Guardar y Salir» antes.';
                 el.confirmDeleteModal.classList.remove('hidden');
 
                 el.confirmDeleteBtn.onclick = async () => {
@@ -2307,13 +2775,60 @@
             });
 
             el.saveItemOrderBtn.addEventListener('click', async () => {
-                await setDoc(refs.masterItems(), { items: state.masterItems });
+                await persistMasterItems();
                 showToast('Orden de ítems guardado.');
             });
 
             el.inventorySummarySearch.addEventListener('input', (e) => renderSummaryList(e.target.value));
             el.orderSummarySearch.addEventListener('input', (e) => renderOrderSummaryList(e.target.value));
             el.manageItemsSearch.addEventListener('input', (e) => renderManageItemsList(e.target.value));
+
+            el.historySearch?.addEventListener('input', (e) => renderHistoryList(false, e.target.value));
+
+            el.itemsExcelDiffCancelBtn?.addEventListener('click', () => {
+                itemsExcelImportDraft = null;
+                el.itemsExcelDiffPanel?.classList.add('hidden');
+                if (el.itemsExcelDiffPanel) el.itemsExcelDiffPanel.innerHTML = '';
+                el.itemsExcelDiffCancelBtn?.classList.add('hidden');
+            });
+
+            el.itemsExcelUpload?.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const parsed = parseExcelCatalogWorkbook(workbook);
+                        if (!parsed.orderedKeys.length) throw new Error('No se encontraron ítems en el archivo.');
+                        buildItemsExcelImportDraft(parsed);
+                        showToast('Comparación lista: revisá las diferencias.');
+                    } catch (err) {
+                        console.error(err);
+                        alert('Error al leer Excel: ' + err.message);
+                    } finally {
+                        event.target.value = '';
+                    }
+                };
+                reader.onerror = () => {
+                    alert('No se pudo leer el archivo.');
+                    event.target.value = '';
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            el.exportExcelNavBtn?.addEventListener('click', () => {
+                if (appMode === 'order' && state.currentOrder) handleExportExcel(state.currentOrder, 'order');
+                else if (appMode === 'inventory' && state.currentInventory) handleExportExcel(state.currentInventory, 'inventory');
+                else showToast('No hay datos para exportar.');
+            });
+
+            el.finalExportExcelBtn?.addEventListener('click', () => handleExportExcel(state.currentInventory, 'inventory'));
+            el.orderFinishedExportExcelBtn?.addEventListener('click', () => handleExportExcel(state.currentOrder, 'order'));
+
+            window.addEventListener('online', updateConnectionStatusBar);
+            window.addEventListener('offline', updateConnectionStatusBar);
 
             el.excelConfigBtn.addEventListener('click', () => {
                 el.excelSheetName.value = state.excelConfig.sheetName;

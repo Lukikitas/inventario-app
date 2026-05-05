@@ -1,4 +1,30 @@
 body { font-family: 'Inter', sans-serif; }
+
+/* Safe area (notch / barra inicio en iOS) */
+.pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+.pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Área táctil amplia para arrastrar ítems en móvil */
+.drag-handle-touch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+}
+
+/* Botones táctiles mínimos en pantallas chicas */
+@media (max-width: 1023px) {
+    .btn-touch {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #1f2937; }
 ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
