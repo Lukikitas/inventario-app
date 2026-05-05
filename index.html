@@ -366,6 +366,24 @@
                 <div id="summary-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
             </div>
 
+            <div id="low-freq-inventory-prompt-view" class="view hidden absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                <h2 class="text-xl font-bold text-gray-100 mb-3">Ítems de poca frecuencia</h2>
+                <p id="low-freq-inv-prompt-text" class="text-gray-300 mb-8 max-w-md"></p>
+                <div class="flex flex-col gap-3 w-full max-w-sm">
+                    <button type="button" id="low-freq-inv-yes-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Sí, revisarlos</button>
+                    <button type="button" id="low-freq-inv-no-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">No, continuar</button>
+                </div>
+            </div>
+
+            <div id="low-freq-order-prompt-view" class="view hidden absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                <h2 class="text-xl font-bold text-gray-100 mb-3">Ítems de poca frecuencia</h2>
+                <p id="low-freq-order-prompt-text" class="text-gray-300 mb-8 max-w-md"></p>
+                <div class="flex flex-col gap-3 w-full max-w-sm">
+                    <button type="button" id="low-freq-order-yes-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg">Sí, revisar para pedir</button>
+                    <button type="button" id="low-freq-order-no-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">No, continuar</button>
+                </div>
+            </div>
+
             <div id="history-view" class="view hidden absolute inset-0 flex flex-col h-full">
                  <div class="flex items-center justify-between mb-4">
                     <button id="back-to-menu-from-history-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
@@ -405,6 +423,7 @@
                     <button type="button" id="items-excel-diff-cancel-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-sm">Ocultar comparación</button>
                 </div>
                 <p class="text-xs text-gray-400 mb-2 shrink-0">Usa la misma hoja y columna de ítem que en opciones Excel de usos (si existe esa columna en la primera fila).</p>
+                <p class="text-xs text-gray-500 mb-2 shrink-0">Clasificación: <strong class="text-gray-400">Desuso</strong> no entra en inventario ni pedidos. <strong class="text-gray-400">Poca frecuencia</strong> se revisa al final (opcional).</p>
                 <div id="items-excel-diff-panel" class="hidden mb-4 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-3 max-h-[40vh] overflow-y-auto shrink-0"></div>
                 <div id="manage-items-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
                 <button id="save-item-order-btn" class="mt-4 shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar Orden</button>
@@ -515,6 +534,8 @@
             },
             itemUsageData: {},
             alwaysNaItems: [],
+            discontinuedItemKeys: [],
+            lowFrequencyItemKeys: [],
             consumptionMismatches: [],
             cachedAlreadyOrderedByItemName: null
         };
@@ -543,6 +564,8 @@
                 setup: document.getElementById('setup-view'),
                 item: document.getElementById('item-view'),
                 summary: document.getElementById('summary-view'),
+                lowFreqInventoryPrompt: document.getElementById('low-freq-inventory-prompt-view'),
+                lowFreqOrderPrompt: document.getElementById('low-freq-order-prompt-view'),
                 history: document.getElementById('history-view'),
                 historyDetail: document.getElementById('history-detail-view'),
                 manageItems: document.getElementById('manage-items-view'),
@@ -719,11 +742,62 @@
 
             async function persistMasterItems() {
                 if (!userId) return;
-                await setDoc(refs.masterItems(), { items: state.masterItems, alwaysNaItems: state.alwaysNaItems });
+                await setDoc(refs.masterItems(), {
+                    items: state.masterItems,
+                    alwaysNaItems: state.alwaysNaItems,
+                    discontinuedItemKeys: state.discontinuedItemKeys,
+                    lowFrequencyItemKeys: state.lowFrequencyItemKeys
+                });
             }
 
             function itemIsAlwaysNa(name) {
                 return state.alwaysNaItems.includes(normalizeCatalogKey(name));
+            }
+
+            function isCatalogDiscontinued(name) {
+                return state.discontinuedItemKeys.includes(normalizeCatalogKey(name));
+            }
+
+            function isCatalogLowFrequency(name) {
+                const k = normalizeCatalogKey(name);
+                return state.lowFrequencyItemKeys.includes(k) && !state.discontinuedItemKeys.includes(k);
+            }
+
+            function catalogFrequencyTier(name) {
+                if (isCatalogDiscontinued(name)) return 'discontinued';
+                if (isCatalogLowFrequency(name)) return 'low';
+                return 'normal';
+            }
+
+            function migrateFrequencyKeys(oldKey, newKey) {
+                if (state.discontinuedItemKeys.includes(oldKey)) {
+                    state.discontinuedItemKeys = state.discontinuedItemKeys.filter(x => x !== oldKey);
+                    if (!state.discontinuedItemKeys.includes(newKey)) state.discontinuedItemKeys.push(newKey);
+                }
+                if (state.lowFrequencyItemKeys.includes(oldKey)) {
+                    state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(x => x !== oldKey);
+                    if (!state.lowFrequencyItemKeys.includes(newKey) && !state.discontinuedItemKeys.includes(newKey)) {
+                        state.lowFrequencyItemKeys.push(newKey);
+                    }
+                }
+            }
+
+            function lowFreqIndicesResolved(process) {
+                const meta = process.metaLowFreqIndices || [];
+                return meta.length === 0 || process.lowFreqPromptDone === true;
+            }
+
+            function filterIndicesForActiveFlow(process, quantityKey) {
+                const meta = process.metaLowFreqIndices || [];
+                const resolved = lowFreqIndicesResolved(process);
+                return process.items
+                    .map((item, index) => ({ item, index }))
+                    .filter(({ item, index }) => {
+                        if (item[quantityKey] !== null) return false;
+                        if (!resolved && meta.includes(index)) return false;
+                        return true;
+                    })
+                    .map(({ index }) => index);
             }
 
             function rebuildAlreadyOrderedCache() {
@@ -798,15 +872,20 @@
                 let sheetName;
                 let prefix;
                 if (baseType === 'order') {
-                    rows = [['Ítem', 'Stock', 'Pedido', 'Recibido']];
-                    entry.items.forEach(item => {
-                        if (item.toOrder !== null && item.toOrder !== 'NO PEDIR') {
-                            const pedido = typeof item.toOrder === 'number' ? item.toOrder : '';
-                            const rec = item.received !== undefined && item.received !== null ? item.received : '';
-                            rows.push([item.name, item.stock ?? '', pedido, rec]);
-                        }
-                    });
-                    if (rows.length <= 1) return alert('No hay líneas de pedido para exportar.');
+                    const lines = entry.items.filter(
+                        item => item.toOrder !== null && item.toOrder !== 'NO PEDIR' && typeof item.toOrder === 'number'
+                    );
+                    if (lines.length === 0) return alert('No hay líneas de pedido para exportar.');
+                    rows = [['Nombre del ítem', 'Cantidad a pedir']];
+                    lines.forEach(item => rows.push([item.name, item.toOrder]));
+                    const totalItems = lines.length;
+                    const totalBultos = lines.reduce((s, item) => s + item.toOrder, 0);
+                    rows.push([]);
+                    rows.push(['Cantidad total de ítems', totalItems]);
+                    rows.push([
+                        'Cantidad total de bultos',
+                        totalBultos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                    ]);
                     sheetName = 'Pedido';
                     prefix = isDetail ? 'detalle_pedido' : 'pedido';
                 } else {
@@ -837,10 +916,23 @@
                             state.alwaysNaItems = Array.isArray(docSnap.data().alwaysNaItems)
                                 ? docSnap.data().alwaysNaItems.map(normalizeCatalogKey)
                                 : [];
+                            state.discontinuedItemKeys = Array.isArray(docSnap.data().discontinuedItemKeys)
+                                ? docSnap.data().discontinuedItemKeys.map(normalizeCatalogKey)
+                                : [];
+                            state.lowFrequencyItemKeys = Array.isArray(docSnap.data().lowFrequencyItemKeys)
+                                ? docSnap.data().lowFrequencyItemKeys.map(normalizeCatalogKey)
+                                : [];
                         } else {
-                            setDoc(refs.masterItems(), { items: initialItemsList, alwaysNaItems: [] });
+                            setDoc(refs.masterItems(), {
+                                items: initialItemsList,
+                                alwaysNaItems: [],
+                                discontinuedItemKeys: [],
+                                lowFrequencyItemKeys: []
+                            });
                             state.masterItems = initialItemsList;
                             state.alwaysNaItems = [];
+                            state.discontinuedItemKeys = [];
+                            state.lowFrequencyItemKeys = [];
                         }
                     });
 
@@ -1057,6 +1149,38 @@
                 }
             }
 
+            function buildCatalogInventoryPayload() {
+                const rows = [];
+                const metaLowFreqIndices = [];
+                state.masterItems.forEach(name => {
+                    if (isCatalogDiscontinued(name)) return;
+                    const idx = rows.length;
+                    rows.push({
+                        name,
+                        quantity: itemIsAlwaysNa(name) ? 'N/A' : null
+                    });
+                    if (isCatalogLowFrequency(name)) metaLowFreqIndices.push(idx);
+                });
+                return { rows, metaLowFreqIndices };
+            }
+
+            function buildCatalogOrderItemsFromBase(baseInv) {
+                const items = [];
+                const metaLowFreqIndices = [];
+                baseInv.items.forEach(line => {
+                    if (isCatalogDiscontinued(line.name)) return;
+                    const idx = items.length;
+                    items.push({
+                        name: line.name,
+                        stock: line.quantity,
+                        toOrder: itemIsAlwaysNa(line.name) ? 'NO PEDIR' : null,
+                        received: null
+                    });
+                    if (isCatalogLowFrequency(line.name)) metaLowFreqIndices.push(idx);
+                });
+                return { items, metaLowFreqIndices };
+            }
+
             async function advanceToNextItem(mode) {
                 positionInQueue++;
                 const process = mode === 'order' ? state.currentOrder : state.currentInventory;
@@ -1065,7 +1189,13 @@
                 if (positionInQueue >= itemsToCountQueue.length) {
                     const remainingIndices = process.items
                         .map((item, index) => ({ ...item, originalIndex: index }))
-                        .filter(item => item[quantityKey] === null)
+                        .filter(item => {
+                            if (item[quantityKey] !== null) return false;
+                            const meta = process.metaLowFreqIndices || [];
+                            const resolved = lowFreqIndicesResolved(process);
+                            if (!resolved && meta.includes(item.originalIndex)) return false;
+                            return true;
+                        })
                         .map(item => item.originalIndex);
 
                     if (remainingIndices.length > 0) {
@@ -1074,6 +1204,21 @@
                         currentIndex = itemsToCountQueue[0];
                         renderCurrentItem(mode);
                     } else {
+                        const meta = process.metaLowFreqIndices || [];
+                        if (meta.length > 0 && process.lowFreqPromptDone !== true) {
+                            const n = meta.length;
+                            if (mode === 'order') {
+                                document.getElementById('low-freq-order-prompt-text').textContent =
+                                    `Hay ${n} ítem(s) de poca frecuencia que no revisaste en el pedido principal. ¿Querés verlos ahora para cargar cantidades?`;
+                                switchView(el.lowFreqOrderPrompt);
+                            } else {
+                                document.getElementById('low-freq-inv-prompt-text').textContent =
+                                    `Hay ${n} ítem(s) de poca frecuencia que no contaste en el recorrido principal. ¿Querés revisarlos ahora?`;
+                                switchView(el.lowFreqInventoryPrompt);
+                            }
+                            await setDoc(mode === 'order' ? refs.currentOrder() : refs.currentInventory(), process);
+                            return;
+                        }
                         if (mode === 'order') {
                             switchView(el.orderFinished);
                         } else {
@@ -1101,14 +1246,18 @@
                     const orderForDate = new Date(entry.orderForDate);
                     orderForDate.setMinutes(orderForDate.getMinutes() + orderForDate.getTimezoneOffset());
                     doc.text(`Pedido para el día: ${orderForDate.toLocaleDateString('es-AR')}`, 14, 22);
-                    doc.autoTable({ head: [['Ítem', 'Cantidad']], body: tableData, startY: 35 });
+                    doc.autoTable({ head: [['Nombre del ítem', 'Cantidad a pedir']], body: tableData, startY: 35 });
 
                     const totalItems = tableData.length;
                     const totalBultos = tableData.reduce((sum, row) => sum + row[1], 0);
                     const finalY = doc.autoTable.previous.finalY;
 
-                    doc.text(`Cantidad de items: ${totalItems}`, 14, finalY + 10);
-                    doc.text(`Cantidad de bultos: ${totalBultos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 14, finalY + 17);
+                    doc.text(`Cantidad total de ítems: ${totalItems}`, 14, finalY + 10);
+                    doc.text(
+                        `Cantidad total de bultos: ${totalBultos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                        14,
+                        finalY + 17
+                    );
 
                     const dateStr = entryDateStamp(entry, 'order');
                     doc.save(`${isDetail ? 'detalle_pedido' : 'pedido'}_${dateStr}.pdf`);
@@ -1569,6 +1718,30 @@
                     naLabel.appendChild(naCb);
                     naLabel.appendChild(document.createTextNode(' N/A'));
 
+                    const freqWrap = document.createElement('label');
+                    freqWrap.className = 'flex items-center gap-2 text-xs text-gray-300 shrink-0';
+                    freqWrap.appendChild(document.createTextNode('Clase '));
+                    const freqSel = document.createElement('select');
+                    freqSel.className = 'bg-gray-600 text-white text-xs rounded-md border border-gray-500 px-2 py-2 min-h-[44px] max-w-[11rem]';
+                    const tier = catalogFrequencyTier(name);
+                    freqSel.innerHTML = `
+                        <option value="normal">Normal</option>
+                        <option value="low">Poca frecuencia</option>
+                        <option value="discontinued">Desuso</option>`;
+                    freqSel.value = tier === 'discontinued' ? 'discontinued' : tier === 'low' ? 'low' : 'normal';
+                    freqSel.title = 'Desuso: fuera de inventario y pedidos. Poca frecuencia: opcional al final.';
+                    freqSel.addEventListener('change', async () => {
+                        const k = normalizeCatalogKey(name);
+                        state.discontinuedItemKeys = state.discontinuedItemKeys.filter(x => x !== k);
+                        state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(x => x !== k);
+                        if (freqSel.value === 'discontinued') state.discontinuedItemKeys.push(k);
+                        else if (freqSel.value === 'low') state.lowFrequencyItemKeys.push(k);
+                        await persistMasterItems();
+                        const labels = { normal: 'Normal', low: 'Poca frecuencia', discontinued: 'Desuso' };
+                        showToast(`Clasificación: ${labels[freqSel.value] || freqSel.value}`);
+                    });
+                    freqWrap.appendChild(freqSel);
+
                     const buttonsContainer = document.createElement('div');
                     buttonsContainer.className = 'flex gap-2 flex-shrink-0';
                     buttonsContainer.innerHTML = `<button type="button" data-index="${originalIndex}" class="edit-item-btn bg-yellow-600 px-3 py-2 rounded-lg text-xs min-h-[44px]">Editar</button>
@@ -1578,6 +1751,7 @@
                     listItem.appendChild(dragWrap);
                     listItem.appendChild(nameContainer);
                     listItem.appendChild(naLabel);
+                    listItem.appendChild(freqWrap);
                     listItem.appendChild(buttonsContainer);
                     el.manageItemsList.appendChild(listItem);
                 });
@@ -1615,6 +1789,7 @@
                                 state.alwaysNaItems = state.alwaysNaItems.filter(x => x !== ko);
                                 if (!state.alwaysNaItems.includes(kn)) state.alwaysNaItems.push(kn);
                             }
+                            migrateFrequencyKeys(ko, kn);
                             state.masterItems[index] = newName;
                             await persistMasterItems();
                             showToast('Ítem renombrado.');
@@ -1629,6 +1804,8 @@
                             const index = parseInt(e.target.dataset.index, 10);
                             const removedKey = normalizeCatalogKey(state.masterItems[index]);
                             state.alwaysNaItems = state.alwaysNaItems.filter(x => x !== removedKey);
+                            state.discontinuedItemKeys = state.discontinuedItemKeys.filter(x => x !== removedKey);
+                            state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(x => x !== removedKey);
                             state.masterItems.splice(index, 1);
                             await persistMasterItems();
                             showToast('Ítem eliminado.');
@@ -1816,7 +1993,10 @@
                 });
 
                 state.masterItems = deduped;
-                state.alwaysNaItems = state.alwaysNaItems.filter(k => deduped.some(m => normalizeCatalogKey(m) === k));
+                const keySet = new Set(deduped.map(m => normalizeCatalogKey(m)));
+                state.alwaysNaItems = state.alwaysNaItems.filter(k => keySet.has(k));
+                state.discontinuedItemKeys = state.discontinuedItemKeys.filter(k => keySet.has(k));
+                state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(k => keySet.has(k));
                 await persistMasterItems();
                 itemsExcelImportDraft = null;
                 el.itemsExcelDiffPanel.classList.add('hidden');
@@ -2048,6 +2228,7 @@
                     let bestMatch = null;
                     let highestScore = 0;
                     state.masterItems.forEach(masterItem => {
+                        if (isCatalogDiscontinued(masterItem)) return;
                         const m = String(masterItem).trim().toUpperCase();
                         if (m.length < 3) return;
                         const score = stringSimilarity(detectedUpper, m);
@@ -2118,7 +2299,9 @@
 
             function updateAddItemDropdown() {
                 const currentItemNames = new Set(tempRemitoItems.map(i => i.name));
-                const availableItems = state.masterItems.filter(item => !currentItemNames.has(item));
+                const availableItems = state.masterItems.filter(
+                    item => !currentItemNames.has(item) && !isCatalogDiscontinued(item)
+                );
 
                 el.addRemitoItemSelect.innerHTML = '<option value="">Seleccionar ítem...</option>';
                 availableItems.sort().forEach(item => {
@@ -2238,31 +2421,51 @@
             el.fetchSirReportBtn.addEventListener('click', handleSirReportFetch);
             el.continueInventoryBtn.addEventListener('click', () => {
                 appMode = 'inventory';
-                itemsToCountQueue = state.currentInventory.items.map((item, index) => ({...item, originalIndex: index})).filter(item => item.quantity === null).map(item => item.originalIndex);
-                if (itemsToCountQueue.length > 0) {
-                    positionInQueue = 0;
-                    currentIndex = itemsToCountQueue[0];
-                    switchView(el.item);
-                    renderCurrentItem('inventory');
-                } else {
+                const inv = state.currentInventory;
+                if (!inv) return;
+                itemsToCountQueue = filterIndicesForActiveFlow(inv, 'quantity');
+                if (itemsToCountQueue.length === 0) {
+                    const meta = inv.metaLowFreqIndices || [];
+                    if (meta.length > 0 && inv.lowFreqPromptDone !== true) {
+                        const n = meta.length;
+                        document.getElementById('low-freq-inv-prompt-text').textContent =
+                            `Hay ${n} ítem(s) de poca frecuencia que no contaste en el recorrido principal. ¿Querés revisarlos ahora?`;
+                        switchView(el.lowFreqInventoryPrompt);
+                        return;
+                    }
                     renderSummaryList();
                     switchView(el.summary);
+                    return;
                 }
+                positionInQueue = 0;
+                currentIndex = itemsToCountQueue[0];
+                switchView(el.item);
+                renderCurrentItem('inventory');
             });
 
             el.continueOrderBtn.addEventListener('click', () => {
                 appMode = 'order';
                 rebuildAlreadyOrderedCache();
-                itemsToCountQueue = state.currentOrder.items.map((item, index) => ({...item, originalIndex: index})).filter(item => item.toOrder === null).map(item => item.originalIndex);
-                if (itemsToCountQueue.length > 0) {
-                    positionInQueue = 0;
-                    currentIndex = itemsToCountQueue[0];
-                    switchView(el.orderItem);
-                    renderCurrentItem('order');
-                } else {
+                const ord = state.currentOrder;
+                if (!ord) return;
+                itemsToCountQueue = filterIndicesForActiveFlow(ord, 'toOrder');
+                if (itemsToCountQueue.length === 0) {
+                    const meta = ord.metaLowFreqIndices || [];
+                    if (meta.length > 0 && ord.lowFreqPromptDone !== true) {
+                        const n = meta.length;
+                        document.getElementById('low-freq-order-prompt-text').textContent =
+                            `Hay ${n} ítem(s) de poca frecuencia que no revisaste en el pedido principal. ¿Querés verlos ahora para cargar cantidades?`;
+                        switchView(el.lowFreqOrderPrompt);
+                        return;
+                    }
                     renderOrderSummaryList();
                     switchView(el.orderSummary);
+                    return;
                 }
+                positionInQueue = 0;
+                currentIndex = itemsToCountQueue[0];
+                switchView(el.orderItem);
+                renderCurrentItem('order');
             });
 
             el.startNewInventoryBtn.addEventListener('click', () => {
@@ -2317,28 +2520,32 @@
 
 
             el.startCountingBtn.addEventListener('click', async () => {
+                const { rows, metaLowFreqIndices } = buildCatalogInventoryPayload();
                 const newInventory = {
                     id: String(Date.now()),
                     type: 'inventory',
                     date: el.inventoryDate.value,
                     timeOfDay: el.inventoryTime.value,
-                    items: state.masterItems.map(name => ({
-                        name,
-                        quantity: itemIsAlwaysNa(name) ? 'N/A' : null
-                    }))
+                    items: rows,
+                    metaLowFreqIndices,
+                    lowFreqPromptDone: false
                 };
                 state.currentInventory = newInventory;
-                itemsToCountQueue = state.currentInventory.items
-                    .map((item, index) => ({ item, index }))
-                    .filter(({ item }) => item.quantity === null)
-                    .map(({ index }) => index);
+                itemsToCountQueue = filterIndicesForActiveFlow(state.currentInventory, 'quantity');
                 positionInQueue = 0;
-                currentIndex = itemsToCountQueue[0];
                 await setDoc(refs.currentInventory(), state.currentInventory);
                 if (itemsToCountQueue.length === 0) {
+                    if (metaLowFreqIndices.length > 0) {
+                        const n = metaLowFreqIndices.length;
+                        document.getElementById('low-freq-inv-prompt-text').textContent =
+                            `Hay ${n} ítem(s) de poca frecuencia. ¿Querés revisarlos ahora?`;
+                        switchView(el.lowFreqInventoryPrompt);
+                        return;
+                    }
                     switchView(el.finished);
                     return;
                 }
+                currentIndex = itemsToCountQueue[0];
                 switchView(el.item);
                 renderCurrentItem('inventory');
             });
@@ -2353,32 +2560,100 @@
                     alert('Error: No se encontró el inventario base.');
                     return;
                 }
+                const { items, metaLowFreqIndices } = buildCatalogOrderItemsFromBase(baseInv);
                 state.currentOrder = {
                     id: String(Date.now()),
                     type: 'order',
                     date: new Date().toISOString(),
                     orderForDate: el.orderForDate.value,
                     baseInventoryId: baseInv.id,
-                    items: baseInv.items.map(item => ({
-                        name: item.name,
-                        stock: item.quantity,
-                        toOrder: itemIsAlwaysNa(item.name) ? 'NO PEDIR' : null,
-                        received: null
-                    }))
+                    items,
+                    metaLowFreqIndices,
+                    lowFreqPromptDone: false
                 };
                 appMode = 'order';
                 rebuildAlreadyOrderedCache();
-                itemsToCountQueue = state.currentOrder.items.map((item, index) => ({ ...item, originalIndex: index })).filter(item => item.toOrder === null).map(item => item.originalIndex);
+                itemsToCountQueue = filterIndicesForActiveFlow(state.currentOrder, 'toOrder');
+                positionInQueue = 0;
+                await setDoc(refs.currentOrder(), state.currentOrder);
+                if (itemsToCountQueue.length === 0) {
+                    if (metaLowFreqIndices.length > 0) {
+                        const n = metaLowFreqIndices.length;
+                        document.getElementById('low-freq-order-prompt-text').textContent =
+                            `Hay ${n} ítem(s) de poca frecuencia. ¿Querés revisarlos ahora para cargar cantidades?`;
+                        switchView(el.lowFreqOrderPrompt);
+                        return;
+                    }
+                    renderOrderSummaryList();
+                    switchView(el.orderSummary);
+                    return;
+                }
+                currentIndex = itemsToCountQueue[0];
+                switchView(el.orderItem);
+                renderCurrentItem('order');
+            });
+
+            document.getElementById('low-freq-inv-yes-btn').addEventListener('click', async () => {
+                if (!state.currentInventory) return;
+                const inv = state.currentInventory;
+                inv.lowFreqPromptDone = true;
+                const meta = inv.metaLowFreqIndices || [];
+                itemsToCountQueue = meta.filter(i => inv.items[i] && inv.items[i].quantity === null);
+                await setDoc(refs.currentInventory(), inv);
+                if (itemsToCountQueue.length === 0) {
+                    switchView(el.finished);
+                    return;
+                }
                 positionInQueue = 0;
                 currentIndex = itemsToCountQueue[0];
-                await setDoc(refs.currentOrder(), state.currentOrder);
+                appMode = 'inventory';
+                switchView(el.item);
+                renderCurrentItem('inventory');
+            });
+
+            document.getElementById('low-freq-inv-no-btn').addEventListener('click', async () => {
+                if (!state.currentInventory) return;
+                const inv = state.currentInventory;
+                inv.lowFreqPromptDone = true;
+                (inv.metaLowFreqIndices || []).forEach(i => {
+                    if (inv.items[i] && inv.items[i].quantity === null) inv.items[i].quantity = 'N/A';
+                });
+                await setDoc(refs.currentInventory(), inv);
+                appMode = 'inventory';
+                switchView(el.finished);
+            });
+
+            document.getElementById('low-freq-order-yes-btn').addEventListener('click', async () => {
+                if (!state.currentOrder) return;
+                const ord = state.currentOrder;
+                ord.lowFreqPromptDone = true;
+                const meta = ord.metaLowFreqIndices || [];
+                itemsToCountQueue = meta.filter(i => ord.items[i] && ord.items[i].toOrder === null);
+                await setDoc(refs.currentOrder(), ord);
                 if (itemsToCountQueue.length === 0) {
                     renderOrderSummaryList();
                     switchView(el.orderSummary);
                     return;
                 }
+                positionInQueue = 0;
+                currentIndex = itemsToCountQueue[0];
+                appMode = 'order';
+                rebuildAlreadyOrderedCache();
                 switchView(el.orderItem);
                 renderCurrentItem('order');
+            });
+
+            document.getElementById('low-freq-order-no-btn').addEventListener('click', async () => {
+                if (!state.currentOrder) return;
+                const ord = state.currentOrder;
+                ord.lowFreqPromptDone = true;
+                (ord.metaLowFreqIndices || []).forEach(i => {
+                    if (ord.items[i] && ord.items[i].toOrder === null) ord.items[i].toOrder = 'NO PEDIR';
+                });
+                await setDoc(refs.currentOrder(), ord);
+                appMode = 'order';
+                rebuildAlreadyOrderedCache();
+                switchView(el.orderFinished);
             });
 
             el.orderMethodRemitoBtn.addEventListener('click', () => {
