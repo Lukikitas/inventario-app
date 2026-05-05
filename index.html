@@ -410,54 +410,53 @@
                     <h1 class="text-2xl font-bold text-center text-gray-100">Gestionar Ítems</h1>
                     <div class="w-8"></div>
                 </div>
-                <div id="locations-panel" class="shrink-0 mb-3 p-3 bg-gray-900 rounded-lg border border-gray-600">
-                    <p class="font-medium text-gray-200 text-sm mb-2">Ubicaciones (orden del recorrido)</p>
-                    <ul id="locations-sort-list" class="space-y-2 mb-2"></ul>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3 shrink-0">
+                    <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="md:col-span-2 w-full bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="manage-filter-class" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por clase">
+                            <option value="all">Clase: todas</option>
+                            <option value="normal">Clase: normal</option>
+                            <option value="low">Clase: poca freq.</option>
+                            <option value="discontinued">Clase: desuso</option>
+                        </select>
+                        <select id="manage-filter-location" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por ubicación">
+                            <option value="all">Ubic.: todas</option>
+                            <option value="none">Ubic.: sin asignar</option>
+                        </select>
+                    </div>
+                </div>
+                <details id="manage-bulk-bar" class="mb-2 shrink-0 p-3 bg-gray-900/80 rounded-lg border border-gray-600" open>
+                    <summary class="cursor-pointer text-sm font-semibold text-gray-200">Edición masiva</summary>
+                    <div class="flex flex-wrap gap-2 mt-2 items-end">
+                        <button type="button" id="manage-select-visible-btn" class="bg-gray-600 hover:bg-gray-500 text-white text-sm font-bold px-3 py-2 rounded-lg min-h-[44px]">Seleccionar visibles</button>
+                        <button type="button" id="manage-clear-selection-btn" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-2 rounded-lg min-h-[44px]">Limpiar</button>
+                        <div class="flex flex-col gap-1 min-w-[130px]">
+                            <span class="text-xs text-gray-400">Clase</span>
+                            <select id="bulk-class-apply" class="bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
+                                <option value="">— No cambiar clase —</option>
+                                <option value="normal">Normal</option>
+                                <option value="low">Poca frecuencia</option>
+                                <option value="discontinued">Desuso</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1 min-w-[130px] flex-1">
+                            <span class="text-xs text-gray-400">Ubicación</span>
+                            <select id="bulk-location-apply" class="w-full bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
+                                <option value="__noop">— No cambiar ubicación —</option>
+                                <option value="">Quitar ubicación</option>
+                            </select>
+                        </div>
+                        <button type="button" id="bulk-apply-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg min-h-[44px] shrink-0">Aplicar</button>
+                    </div>
+                </details>
+                <details id="locations-panel" class="shrink-0 mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600">
+                    <summary class="cursor-pointer text-sm font-semibold text-gray-200">Ubicaciones y orden de recorrido</summary>
+                    <ul id="locations-sort-list" class="space-y-2 mt-2 mb-2"></ul>
                     <div class="flex gap-2 flex-wrap items-center">
                         <input type="text" id="new-location-input" placeholder="Ej: Bodega, Congelados..." maxlength="80" class="flex-1 min-w-[140px] bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
                         <button type="button" id="add-location-btn" class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-4 rounded-lg min-h-[44px] shrink-0">Agregar</button>
                     </div>
-                </div>
-                <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-3 border-2 border-gray-600 shrink-0">
-                <div class="flex flex-wrap gap-2 mb-3 shrink-0 items-end">
-                    <div class="flex flex-col gap-1 min-w-[140px] flex-1">
-                        <label for="manage-filter-class" class="text-xs text-gray-400">Filtrar por clase</label>
-                        <select id="manage-filter-class" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
-                            <option value="all">Todas las clases</option>
-                            <option value="normal">Solo normal</option>
-                            <option value="low">Solo poca frecuencia</option>
-                            <option value="discontinued">Solo desuso</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-col gap-1 min-w-[140px] flex-1">
-                        <label for="manage-filter-location" class="text-xs text-gray-400">Filtrar por ubicación</label>
-                        <select id="manage-filter-location" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
-                            <option value="all">Todas las ubicaciones</option>
-                            <option value="none">Sin ubicación</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="manage-bulk-bar" class="flex flex-wrap gap-2 mb-3 shrink-0 p-3 bg-gray-900/80 rounded-lg border border-gray-600 items-end">
-                    <button type="button" id="manage-select-visible-btn" class="bg-gray-600 hover:bg-gray-500 text-white text-sm font-bold px-3 py-2 rounded-lg min-h-[44px]">Seleccionar visibles</button>
-                    <button type="button" id="manage-clear-selection-btn" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-2 rounded-lg min-h-[44px]">Limpiar</button>
-                    <div class="flex flex-col gap-1 min-w-[130px]">
-                        <span class="text-xs text-gray-400">Clase (masivo)</span>
-                        <select id="bulk-class-apply" class="bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
-                            <option value="">— No cambiar clase —</option>
-                            <option value="normal">Normal</option>
-                            <option value="low">Poca frecuencia</option>
-                            <option value="discontinued">Desuso</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-col gap-1 min-w-[130px] flex-1">
-                        <span class="text-xs text-gray-400">Ubicación (masivo)</span>
-                        <select id="bulk-location-apply" class="w-full bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
-                            <option value="__noop">— No cambiar ubicación —</option>
-                            <option value="">Quitar ubicación</option>
-                        </select>
-                    </div>
-                    <button type="button" id="bulk-apply-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg min-h-[44px] shrink-0">Aplicar</button>
-                </div>
+                </details>
                 <div class="flex flex-col sm:flex-row gap-2 mb-4 shrink-0">
                     <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
                     <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold min-h-[44px] shrink-0">+</button>
@@ -469,9 +468,8 @@
                     </label>
                     <button type="button" id="items-excel-diff-cancel-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-sm">Ocultar comparación</button>
                 </div>
-                <p class="text-xs text-gray-400 mb-2 shrink-0">Usa la misma hoja y columna de ítem que en opciones Excel de usos (si existe esa columna en la primera fila).</p>
-                <p class="text-xs text-gray-500 mb-2 shrink-0">Clasificación: <strong class="text-gray-400">Desuso</strong> no entra en inventario ni pedidos. <strong class="text-gray-400">Poca frecuencia</strong> se revisa al final (opcional). <strong class="text-gray-400">Ubicación</strong>: orden del recorrido en conteo y pedido.</p>
-                <div id="items-excel-diff-panel" class="hidden mb-4 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-3 max-h-[40vh] overflow-y-auto shrink-0"></div>
+                <p class="text-xs text-gray-500 mb-2 shrink-0">Desuso no entra en inventario/pedidos. Poca frecuencia se revisa al final. Ubicación define el orden de recorrido.</p>
+                <div id="items-excel-diff-panel" class="hidden mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-3 max-h-[40vh] overflow-y-auto shrink-0"></div>
                 <div id="manage-items-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
                 <button id="save-item-order-btn" class="mt-4 shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar Orden</button>
             </div>

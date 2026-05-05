@@ -75,3 +75,21 @@ details > summary::-webkit-details-marker { display: none; }
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
 }
+
+#manage-items-view details > summary {
+    list-style: none;
+}
+
+#manage-items-view details > summary::-webkit-details-marker {
+    display: none;
+}
+
+#manage-items-view details > summary::after {
+    content: "▾";
+    float: right;
+    color: #9ca3af;
+}
+
+#manage-items-view details:not([open]) > summary::after {
+    content: "▸";
+}
