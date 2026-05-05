@@ -5,6 +5,18 @@
         align-items: flex-start;
     }
 
+    #main-menu-view {
+        z-index: auto;
+    }
+
+    #main-content {
+        z-index: auto;
+    }
+
+    #nav-buttons {
+        z-index: auto;
+    }
+
     #app-container {
         max-width: 100vw;
         width: 100vw;

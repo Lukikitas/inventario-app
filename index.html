@@ -16,7 +16,7 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4 pt-safe pb-safe">
 
-    <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[90vh] min-h-[90vh] relative lg:max-w-none lg:rounded-none lg:h-screen lg:min-h-screen">
+    <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col h-[100dvh] max-h-[100dvh] min-h-0 relative lg:max-w-none lg:rounded-none lg:h-screen lg:max-h-none lg:min-h-screen">
 
         <div id="loading-view" class="view absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <h1 class="text-2xl font-bold text-white">Conectando...</h1>
@@ -410,7 +410,54 @@
                     <h1 class="text-2xl font-bold text-center text-gray-100">Gestionar Ítems</h1>
                     <div class="w-8"></div>
                 </div>
-                 <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-4 border-2 border-gray-600 shrink-0">
+                <div id="locations-panel" class="shrink-0 mb-3 p-3 bg-gray-900 rounded-lg border border-gray-600">
+                    <p class="font-medium text-gray-200 text-sm mb-2">Ubicaciones (orden del recorrido)</p>
+                    <ul id="locations-sort-list" class="space-y-2 mb-2"></ul>
+                    <div class="flex gap-2 flex-wrap items-center">
+                        <input type="text" id="new-location-input" placeholder="Ej: Bodega, Congelados..." maxlength="80" class="flex-1 min-w-[140px] bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                        <button type="button" id="add-location-btn" class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-4 rounded-lg min-h-[44px] shrink-0">Agregar</button>
+                    </div>
+                </div>
+                <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="w-full bg-gray-700 p-2 rounded-lg mb-3 border-2 border-gray-600 shrink-0">
+                <div class="flex flex-wrap gap-2 mb-3 shrink-0 items-end">
+                    <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+                        <label for="manage-filter-class" class="text-xs text-gray-400">Filtrar por clase</label>
+                        <select id="manage-filter-class" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                            <option value="all">Todas las clases</option>
+                            <option value="normal">Solo normal</option>
+                            <option value="low">Solo poca frecuencia</option>
+                            <option value="discontinued">Solo desuso</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+                        <label for="manage-filter-location" class="text-xs text-gray-400">Filtrar por ubicación</label>
+                        <select id="manage-filter-location" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                            <option value="all">Todas las ubicaciones</option>
+                            <option value="none">Sin ubicación</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="manage-bulk-bar" class="flex flex-wrap gap-2 mb-3 shrink-0 p-3 bg-gray-900/80 rounded-lg border border-gray-600 items-end">
+                    <button type="button" id="manage-select-visible-btn" class="bg-gray-600 hover:bg-gray-500 text-white text-sm font-bold px-3 py-2 rounded-lg min-h-[44px]">Seleccionar visibles</button>
+                    <button type="button" id="manage-clear-selection-btn" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-2 rounded-lg min-h-[44px]">Limpiar</button>
+                    <div class="flex flex-col gap-1 min-w-[130px]">
+                        <span class="text-xs text-gray-400">Clase (masivo)</span>
+                        <select id="bulk-class-apply" class="bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
+                            <option value="">— No cambiar clase —</option>
+                            <option value="normal">Normal</option>
+                            <option value="low">Poca frecuencia</option>
+                            <option value="discontinued">Desuso</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1 min-w-[130px] flex-1">
+                        <span class="text-xs text-gray-400">Ubicación (masivo)</span>
+                        <select id="bulk-location-apply" class="w-full bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
+                            <option value="__noop">— No cambiar ubicación —</option>
+                            <option value="">Quitar ubicación</option>
+                        </select>
+                    </div>
+                    <button type="button" id="bulk-apply-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg min-h-[44px] shrink-0">Aplicar</button>
+                </div>
                 <div class="flex flex-col sm:flex-row gap-2 mb-4 shrink-0">
                     <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
                     <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold min-h-[44px] shrink-0">+</button>
@@ -423,7 +470,7 @@
                     <button type="button" id="items-excel-diff-cancel-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-sm">Ocultar comparación</button>
                 </div>
                 <p class="text-xs text-gray-400 mb-2 shrink-0">Usa la misma hoja y columna de ítem que en opciones Excel de usos (si existe esa columna en la primera fila).</p>
-                <p class="text-xs text-gray-500 mb-2 shrink-0">Clasificación: <strong class="text-gray-400">Desuso</strong> no entra en inventario ni pedidos. <strong class="text-gray-400">Poca frecuencia</strong> se revisa al final (opcional).</p>
+                <p class="text-xs text-gray-500 mb-2 shrink-0">Clasificación: <strong class="text-gray-400">Desuso</strong> no entra en inventario ni pedidos. <strong class="text-gray-400">Poca frecuencia</strong> se revisa al final (opcional). <strong class="text-gray-400">Ubicación</strong>: orden del recorrido en conteo y pedido.</p>
                 <div id="items-excel-diff-panel" class="hidden mb-4 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-3 max-h-[40vh] overflow-y-auto shrink-0"></div>
                 <div id="manage-items-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
                 <button id="save-item-order-btn" class="mt-4 shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar Orden</button>
@@ -537,7 +584,9 @@
             discontinuedItemKeys: [],
             lowFrequencyItemKeys: [],
             consumptionMismatches: [],
-            cachedAlreadyOrderedByItemName: null
+            cachedAlreadyOrderedByItemName: null,
+            inventoryLocations: [],
+            itemLocationIds: {}
         };
         let itemsToCountQueue = [];
         let positionInQueue = -1;
@@ -609,6 +658,16 @@
                 backToHistoryBtn: document.getElementById('back-to-history-btn'),
                 manageItemsList: document.getElementById('manage-items-list'),
                 manageItemsSearch: document.getElementById('manage-items-search'),
+                locationsSortList: document.getElementById('locations-sort-list'),
+                newLocationInput: document.getElementById('new-location-input'),
+                addLocationBtn: document.getElementById('add-location-btn'),
+                manageFilterClass: document.getElementById('manage-filter-class'),
+                manageFilterLocation: document.getElementById('manage-filter-location'),
+                bulkClassApply: document.getElementById('bulk-class-apply'),
+                bulkLocationApply: document.getElementById('bulk-location-apply'),
+                bulkApplyBtn: document.getElementById('bulk-apply-btn'),
+                manageSelectVisibleBtn: document.getElementById('manage-select-visible-btn'),
+                manageClearSelectionBtn: document.getElementById('manage-clear-selection-btn'),
                 newItemName: document.getElementById('new-item-name'),
                 addItemBtn: document.getElementById('add-item-btn'),
                 backToMenuFromManageBtn: document.getElementById('back-to-menu-from-manage-btn'),
@@ -746,7 +805,9 @@
                     items: state.masterItems,
                     alwaysNaItems: state.alwaysNaItems,
                     discontinuedItemKeys: state.discontinuedItemKeys,
-                    lowFrequencyItemKeys: state.lowFrequencyItemKeys
+                    lowFrequencyItemKeys: state.lowFrequencyItemKeys,
+                    inventoryLocations: state.inventoryLocations,
+                    itemLocationIds: state.itemLocationIds
                 });
             }
 
@@ -780,6 +841,155 @@
                         state.lowFrequencyItemKeys.push(newKey);
                     }
                 }
+            }
+
+            function migrateItemLocationKeys(oldKey, newKey) {
+                const v = state.itemLocationIds[oldKey];
+                if (v !== undefined) {
+                    delete state.itemLocationIds[oldKey];
+                    state.itemLocationIds[newKey] = v;
+                }
+            }
+
+            function generateInventoryLocationId() {
+                return 'loc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+            }
+
+            function orderedMasterNamesForWorkflow() {
+                const validLocIds = new Set(state.inventoryLocations.map(l => l.id));
+                const buckets = new Map();
+                state.inventoryLocations.forEach(l => buckets.set(l.id, []));
+                const noLoc = [];
+
+                state.masterItems.forEach(name => {
+                    const k = normalizeCatalogKey(name);
+                    const lid = state.itemLocationIds[k];
+                    if (lid && validLocIds.has(lid)) {
+                        buckets.get(lid).push(name);
+                    } else {
+                        noLoc.push(name);
+                    }
+                });
+                const ordered = [];
+                state.inventoryLocations.forEach(loc => {
+                    ordered.push(...(buckets.get(loc.id) || []));
+                });
+                ordered.push(...noLoc);
+                return ordered;
+            }
+
+            function refreshManageLocationFilterOptions() {
+                const sel = el.manageFilterLocation;
+                const bulkLoc = el.bulkLocationApply;
+                if (!sel || !bulkLoc) return;
+                const curF = sel.value;
+                const curB = bulkLoc.value;
+
+                sel.innerHTML = '<option value="all">Todas las ubicaciones</option><option value="none">Sin ubicación</option>';
+                state.inventoryLocations.forEach(loc => {
+                    const o = document.createElement('option');
+                    o.value = loc.id;
+                    o.textContent = loc.name;
+                    sel.appendChild(o);
+                });
+                if ([...sel.options].some(o => o.value === curF)) sel.value = curF;
+                else sel.value = 'all';
+
+                bulkLoc.innerHTML = '<option value="__noop">— No cambiar ubicación —</option><option value="">Quitar ubicación</option>';
+                state.inventoryLocations.forEach(loc => {
+                    const o = document.createElement('option');
+                    o.value = loc.id;
+                    o.textContent = loc.name;
+                    bulkLoc.appendChild(o);
+                });
+                if ([...bulkLoc.options].some(o => o.value === curB)) bulkLoc.value = curB;
+                else bulkLoc.value = '__noop';
+            }
+
+            function renderLocationsEditor() {
+                const ul = el.locationsSortList;
+                if (!ul) return;
+                ul.innerHTML = '';
+
+                const move = async (fromIndex, toIndex) => {
+                    if (toIndex < 0 || toIndex >= state.inventoryLocations.length) return;
+                    const arr = state.inventoryLocations;
+                    const [row] = arr.splice(fromIndex, 1);
+                    arr.splice(toIndex, 0, row);
+                    await persistMasterItems();
+                    renderLocationsEditor();
+                    refreshManageLocationFilterOptions();
+                };
+
+                state.inventoryLocations.forEach((loc, idx) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex flex-wrap items-center gap-2 bg-gray-800 p-2 rounded-lg border border-gray-700';
+                    const title = document.createElement('span');
+                    title.className = 'flex-1 text-gray-200 text-sm min-w-[120px]';
+                    title.textContent = `${idx + 1}. ${loc.name}`;
+                    const upBtn = document.createElement('button');
+                    upBtn.type = 'button';
+                    upBtn.className = 'bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-lg min-h-[44px] min-w-[44px]';
+                    upBtn.textContent = '↑';
+                    upBtn.disabled = idx === 0;
+                    upBtn.addEventListener('click', () => move(idx, idx - 1));
+
+                    const downBtn = document.createElement('button');
+                    downBtn.type = 'button';
+                    downBtn.className = 'bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-lg min-h-[44px] min-w-[44px]';
+                    downBtn.textContent = '↓';
+                    downBtn.disabled = idx === state.inventoryLocations.length - 1;
+                    downBtn.addEventListener('click', () => move(idx, idx + 1));
+
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = 'bg-red-800 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm min-h-[44px]';
+                    delBtn.textContent = 'Quitar';
+                    delBtn.addEventListener('click', async () => {
+                        if (!confirm(`¿Quitar la ubicación "${loc.name}"? Los ítems quedarán sin ubicación.`)) return;
+                        state.inventoryLocations.splice(idx, 1);
+                        Object.keys(state.itemLocationIds).forEach(k => {
+                            if (state.itemLocationIds[k] === loc.id) delete state.itemLocationIds[k];
+                        });
+                        await persistMasterItems();
+                        renderLocationsEditor();
+                        refreshManageLocationFilterOptions();
+                        renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
+                        showToast('Ubicación eliminada.');
+                    });
+
+                    li.appendChild(title);
+                    li.appendChild(upBtn);
+                    li.appendChild(downBtn);
+                    li.appendChild(delBtn);
+                    ul.appendChild(li);
+                });
+
+                if (!state.inventoryLocations.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'text-xs text-gray-500';
+                    empty.textContent = 'Todavía no hay ubicaciones. Agregá la primera arriba.';
+                    ul.appendChild(empty);
+                }
+            }
+
+            function manageItemsPassesFilters(name) {
+                const tier = catalogFrequencyTier(name);
+                const classFilter = el.manageFilterClass?.value || 'all';
+                if (classFilter === 'normal' && tier !== 'normal') return false;
+                if (classFilter === 'low' && tier !== 'low') return false;
+                if (classFilter === 'discontinued' && tier !== 'discontinued') return false;
+
+                const locFilter = el.manageFilterLocation?.value || 'all';
+                const k = normalizeCatalogKey(name);
+                const lid = state.itemLocationIds[k];
+                const validIds = new Set(state.inventoryLocations.map(l => l.id));
+                const hasLoc = Boolean(lid && validIds.has(lid));
+
+                if (locFilter === 'none' && hasLoc) return false;
+                if (locFilter !== 'all' && locFilter !== 'none' && lid !== locFilter) return false;
+
+                return true;
             }
 
             function lowFreqIndicesResolved(process) {
@@ -922,17 +1132,30 @@
                             state.lowFrequencyItemKeys = Array.isArray(docSnap.data().lowFrequencyItemKeys)
                                 ? docSnap.data().lowFrequencyItemKeys.map(normalizeCatalogKey)
                                 : [];
+                            state.inventoryLocations = Array.isArray(docSnap.data().inventoryLocations)
+                                ? docSnap.data().inventoryLocations.filter(l => l && typeof l.id === 'string' && typeof l.name === 'string')
+                                : [];
+                            const rawLocMap = docSnap.data().itemLocationIds;
+                            state.itemLocationIds = rawLocMap && typeof rawLocMap === 'object' && !Array.isArray(rawLocMap)
+                                ? Object.fromEntries(
+                                    Object.entries(rawLocMap).map(([k, v]) => [normalizeCatalogKey(k), String(v)])
+                                  )
+                                : {};
                         } else {
                             setDoc(refs.masterItems(), {
                                 items: initialItemsList,
                                 alwaysNaItems: [],
                                 discontinuedItemKeys: [],
-                                lowFrequencyItemKeys: []
+                                lowFrequencyItemKeys: [],
+                                inventoryLocations: [],
+                                itemLocationIds: {}
                             });
                             state.masterItems = initialItemsList;
                             state.alwaysNaItems = [];
                             state.discontinuedItemKeys = [];
                             state.lowFrequencyItemKeys = [];
+                            state.inventoryLocations = [];
+                            state.itemLocationIds = {};
                         }
                     });
 
@@ -1152,7 +1375,7 @@
             function buildCatalogInventoryPayload() {
                 const rows = [];
                 const metaLowFreqIndices = [];
-                state.masterItems.forEach(name => {
+                orderedMasterNamesForWorkflow().forEach(name => {
                     if (isCatalogDiscontinued(name)) return;
                     const idx = rows.length;
                     rows.push({
@@ -1167,7 +1390,13 @@
             function buildCatalogOrderItemsFromBase(baseInv) {
                 const items = [];
                 const metaLowFreqIndices = [];
-                baseInv.items.forEach(line => {
+                const baseByKey = new Map(baseInv.items.map(line => [normalizeCatalogKey(line.name), line]));
+                const seen = new Set();
+
+                orderedMasterNamesForWorkflow().forEach(name => {
+                    const line = baseByKey.get(normalizeCatalogKey(name));
+                    if (!line) return;
+                    seen.add(normalizeCatalogKey(line.name));
                     if (isCatalogDiscontinued(line.name)) return;
                     const idx = items.length;
                     items.push({
@@ -1178,6 +1407,22 @@
                     });
                     if (isCatalogLowFrequency(line.name)) metaLowFreqIndices.push(idx);
                 });
+
+                const extras = baseInv.items
+                    .filter(line => !seen.has(normalizeCatalogKey(line.name)))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                extras.forEach(line => {
+                    if (isCatalogDiscontinued(line.name)) return;
+                    const idx = items.length;
+                    items.push({
+                        name: line.name,
+                        stock: line.quantity,
+                        toOrder: itemIsAlwaysNa(line.name) ? 'NO PEDIR' : null,
+                        received: null
+                    });
+                    if (isCatalogLowFrequency(line.name)) metaLowFreqIndices.push(idx);
+                });
+
                 return { items, metaLowFreqIndices };
             }
 
@@ -1676,23 +1921,34 @@
                 switchView(el.editInventory);
             }
 
-            function renderManageItemsList(searchTerm = '') {
+            function renderManageItemsList(searchTerm = '', opts = {}) {
+                if (!opts.skipLocationsEditor) {
+                    refreshManageLocationFilterOptions();
+                    renderLocationsEditor();
+                }
                 el.manageItemsList.innerHTML = '';
+                const q = searchTerm.toLowerCase();
                 const filteredItems = state.masterItems.filter(name =>
-                    name.toLowerCase().includes(searchTerm.toLowerCase())
+                    name.toLowerCase().includes(q) && manageItemsPassesFilters(name)
                 );
 
                 filteredItems.forEach((name) => {
                     const originalIndex = state.masterItems.indexOf(name);
                     const listItem = document.createElement('div');
                     listItem.className = 'manage-item-row bg-gray-700 p-3 rounded-lg flex flex-wrap justify-between items-center gap-2';
-                    listItem.setAttribute('draggable', true);
                     listItem.dataset.index = originalIndex;
+
+                    const selCb = document.createElement('input');
+                    selCb.type = 'checkbox';
+                    selCb.className = 'manage-item-cb h-5 w-5 shrink-0 rounded border-gray-500 bg-gray-600 text-indigo-500 focus:ring-indigo-400';
+                    selCb.dataset.itemKey = normalizeCatalogKey(name);
 
                     const dragWrap = document.createElement('span');
                     dragWrap.className = 'drag-handle drag-handle-touch text-gray-400 cursor-grab select-none';
                     dragWrap.title = 'Arrastrar para reordenar';
                     dragWrap.textContent = '☰';
+                    dragWrap.setAttribute('draggable', true);
+                    dragWrap.dataset.index = originalIndex;
 
                     const nameContainer = document.createElement('div');
                     nameContainer.className = 'flex-grow min-w-[120px]';
@@ -1742,16 +1998,46 @@
                     });
                     freqWrap.appendChild(freqSel);
 
+                    const locWrap = document.createElement('label');
+                    locWrap.className = 'flex items-center gap-2 text-xs text-gray-300 shrink-0';
+                    locWrap.appendChild(document.createTextNode('Ubic. '));
+                    const locSel = document.createElement('select');
+                    locSel.className = 'bg-gray-600 text-white text-xs rounded-md border border-gray-500 px-2 py-2 min-h-[44px] max-w-[10rem]';
+                    const optNone = document.createElement('option');
+                    optNone.value = '';
+                    optNone.textContent = '—';
+                    locSel.appendChild(optNone);
+                    state.inventoryLocations.forEach(loc => {
+                        const o = document.createElement('option');
+                        o.value = loc.id;
+                        o.textContent = loc.name;
+                        locSel.appendChild(o);
+                    });
+                    const kLoc = normalizeCatalogKey(name);
+                    const assigned = state.itemLocationIds[kLoc];
+                    locSel.value =
+                        assigned && state.inventoryLocations.some(l => l.id === assigned) ? assigned : '';
+                    locSel.addEventListener('change', async () => {
+                        const k = normalizeCatalogKey(name);
+                        if (!locSel.value) delete state.itemLocationIds[k];
+                        else state.itemLocationIds[k] = locSel.value;
+                        await persistMasterItems();
+                        showToast('Ubicación actualizada.');
+                    });
+                    locWrap.appendChild(locSel);
+
                     const buttonsContainer = document.createElement('div');
                     buttonsContainer.className = 'flex gap-2 flex-shrink-0';
                     buttonsContainer.innerHTML = `<button type="button" data-index="${originalIndex}" class="edit-item-btn bg-yellow-600 px-3 py-2 rounded-lg text-xs min-h-[44px]">Editar</button>
                                                   <button type="button" data-index="${originalIndex}" class="save-item-btn hidden bg-green-600 px-3 py-2 rounded-lg text-xs min-h-[44px]">Guardar</button>
                                                   <button type="button" data-index="${originalIndex}" class="delete-item-btn bg-red-600 px-3 py-2 rounded-lg text-xs font-bold min-h-[44px]">&times;</button>`;
 
+                    listItem.appendChild(selCb);
                     listItem.appendChild(dragWrap);
                     listItem.appendChild(nameContainer);
                     listItem.appendChild(naLabel);
                     listItem.appendChild(freqWrap);
+                    listItem.appendChild(locWrap);
                     listItem.appendChild(buttonsContainer);
                     el.manageItemsList.appendChild(listItem);
                 });
@@ -1790,11 +2076,12 @@
                                 if (!state.alwaysNaItems.includes(kn)) state.alwaysNaItems.push(kn);
                             }
                             migrateFrequencyKeys(ko, kn);
+                            migrateItemLocationKeys(ko, kn);
                             state.masterItems[index] = newName;
                             await persistMasterItems();
                             showToast('Ítem renombrado.');
                         }
-                        renderManageItemsList(el.manageItemsSearch.value);
+                        renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
                     });
                 });
 
@@ -1806,37 +2093,43 @@
                             state.alwaysNaItems = state.alwaysNaItems.filter(x => x !== removedKey);
                             state.discontinuedItemKeys = state.discontinuedItemKeys.filter(x => x !== removedKey);
                             state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(x => x !== removedKey);
+                            delete state.itemLocationIds[removedKey];
                             state.masterItems.splice(index, 1);
                             await persistMasterItems();
                             showToast('Ítem eliminado.');
-                            renderManageItemsList(el.manageItemsSearch.value);
+                            renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
                         }
                     });
                 });
 
-                el.manageItemsList.querySelectorAll('[draggable="true"]').forEach(item => {
-                    item.addEventListener('dragstart', e => {
-                        draggedItemIndex = parseInt(e.currentTarget.dataset.index, 10);
-                        e.currentTarget.classList.add('dragging');
-                    });
-                    item.addEventListener('dragend', e => {
-                        e.currentTarget.classList.remove('dragging');
-                        draggedItemIndex = null;
-                        el.manageItemsList.querySelectorAll('.drag-over').forEach(i => i.classList.remove('drag-over'));
-                    });
-                    item.addEventListener('dragover', e => {
+                el.manageItemsList.querySelectorAll('.manage-item-row').forEach(row => {
+                    row.addEventListener('dragover', e => {
                         e.preventDefault();
                         el.manageItemsList.querySelectorAll('.drag-over').forEach(i => i.classList.remove('drag-over'));
-                        e.currentTarget.classList.add('drag-over');
+                        row.classList.add('drag-over');
                     });
-                    item.addEventListener('drop', e => {
+                    row.addEventListener('drop', e => {
                         e.preventDefault();
-                        const droppedOnItemIndex = parseInt(e.currentTarget.dataset.index, 10);
+                        const droppedOnItemIndex = parseInt(row.dataset.index, 10);
                         if (draggedItemIndex !== null && draggedItemIndex !== droppedOnItemIndex) {
                             const [draggedItem] = state.masterItems.splice(draggedItemIndex, 1);
                             state.masterItems.splice(droppedOnItemIndex, 0, draggedItem);
-                            renderManageItemsList(el.manageItemsSearch.value);
+                            renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
                         }
+                    });
+                });
+
+                el.manageItemsList.querySelectorAll('.drag-handle-touch[draggable="true"]').forEach(handle => {
+                    handle.addEventListener('dragstart', e => {
+                        draggedItemIndex = parseInt(e.currentTarget.dataset.index, 10);
+                        const row = e.currentTarget.closest('.manage-item-row');
+                        if (row) row.classList.add('dragging');
+                    });
+                    handle.addEventListener('dragend', e => {
+                        const row = e.currentTarget.closest('.manage-item-row');
+                        if (row) row.classList.remove('dragging');
+                        draggedItemIndex = null;
+                        el.manageItemsList.querySelectorAll('.drag-over').forEach(i => i.classList.remove('drag-over'));
                     });
                 });
             }
@@ -1997,12 +2290,15 @@
                 state.alwaysNaItems = state.alwaysNaItems.filter(k => keySet.has(k));
                 state.discontinuedItemKeys = state.discontinuedItemKeys.filter(k => keySet.has(k));
                 state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(k => keySet.has(k));
+                Object.keys(state.itemLocationIds).forEach(k => {
+                    if (!keySet.has(k)) delete state.itemLocationIds[k];
+                });
                 await persistMasterItems();
                 itemsExcelImportDraft = null;
                 el.itemsExcelDiffPanel.classList.add('hidden');
                 el.itemsExcelDiffPanel.innerHTML = '';
                 if (el.itemsExcelDiffCancelBtn) el.itemsExcelDiffCancelBtn.classList.add('hidden');
-                renderManageItemsList(el.manageItemsSearch.value);
+                renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
                 showToast('Catálogo actualizado desde Excel.');
             }
 
@@ -3054,9 +3350,73 @@
                 showToast('Orden de ítems guardado.');
             });
 
+            el.manageFilterClass?.addEventListener('change', () =>
+                renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true }));
+            el.manageFilterLocation?.addEventListener('change', () =>
+                renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true }));
+
+            el.addLocationBtn?.addEventListener('click', async () => {
+                const raw = el.newLocationInput.value.trim();
+                if (!raw) {
+                    alert('Escribí un nombre para la ubicación.');
+                    return;
+                }
+                state.inventoryLocations.push({ id: generateInventoryLocationId(), name: raw.toUpperCase() });
+                el.newLocationInput.value = '';
+                await persistMasterItems();
+                renderLocationsEditor();
+                refreshManageLocationFilterOptions();
+                renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
+                showToast('Ubicación agregada.');
+            });
+            el.newLocationInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    el.addLocationBtn?.click();
+                }
+            });
+
+            el.manageSelectVisibleBtn?.addEventListener('click', () => {
+                el.manageItemsList.querySelectorAll('.manage-item-cb').forEach(cb => { cb.checked = true; });
+            });
+            el.manageClearSelectionBtn?.addEventListener('click', () => {
+                el.manageItemsList.querySelectorAll('.manage-item-cb').forEach(cb => { cb.checked = false; });
+            });
+            el.bulkApplyBtn?.addEventListener('click', async () => {
+                const keys = [...el.manageItemsList.querySelectorAll('.manage-item-cb:checked')].map(cb => cb.dataset.itemKey);
+                if (!keys.length) {
+                    alert('Seleccioná al menos un ítem.');
+                    return;
+                }
+                const cls = el.bulkClassApply.value;
+                const loc = el.bulkLocationApply.value;
+                if (!cls && loc === '__noop') {
+                    alert('Elegí una clase y/o una ubicación para aplicar.');
+                    return;
+                }
+                keys.forEach(k => {
+                    if (cls) {
+                        state.discontinuedItemKeys = state.discontinuedItemKeys.filter(x => x !== k);
+                        state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(x => x !== k);
+                        if (cls === 'discontinued') state.discontinuedItemKeys.push(k);
+                        else if (cls === 'low') state.lowFrequencyItemKeys.push(k);
+                    }
+                    if (loc !== '__noop') {
+                        if (!loc) delete state.itemLocationIds[k];
+                        else state.itemLocationIds[k] = loc;
+                    }
+                });
+                await persistMasterItems();
+                el.bulkClassApply.value = '';
+                el.bulkLocationApply.value = '__noop';
+                showToast('Cambios aplicados a los ítems seleccionados.');
+                renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
+            });
+
             el.inventorySummarySearch.addEventListener('input', (e) => renderSummaryList(e.target.value));
             el.orderSummarySearch.addEventListener('input', (e) => renderOrderSummaryList(e.target.value));
-            el.manageItemsSearch.addEventListener('input', (e) => renderManageItemsList(e.target.value));
+            el.manageItemsSearch.addEventListener('input', (e) =>
+                renderManageItemsList(e.target.value, { skipLocationsEditor: true }));
 
             el.historySearch?.addEventListener('input', (e) => renderHistoryList(false, e.target.value));
 

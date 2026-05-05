@@ -1,5 +1,35 @@
 body { font-family: 'Inter', sans-serif; }
 
+/*
+ * Móvil: el menú principal debe quedar por encima del panel #main-content en el stack,
+ * si no los toques llegan a una capa transparente y los botones del menú “no hacen nada”.
+ */
+@media (max-width: 1023px) {
+    #main-menu-view:not(.hidden) {
+        z-index: 40;
+    }
+    #main-content {
+        position: relative;
+        z-index: 15;
+    }
+    #nav-buttons {
+        position: relative;
+        z-index: 25;
+    }
+}
+
+button,
+a,
+select,
+input[type="checkbox"],
+label.cursor-pointer {
+    touch-action: manipulation;
+}
+
+#app-container {
+    -webkit-overflow-scrolling: touch;
+}
+
 /* Safe area (notch / barra inicio en iOS) */
 .pb-safe {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
@@ -42,4 +72,6 @@ details > summary::-webkit-details-marker { display: none; }
 
 #main-content {
     overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
 }
