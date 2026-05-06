@@ -57,6 +57,7 @@
                         <button id="item-history-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg">Historial de Ítems</button>
                         <button id="history-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Ver Historial</button>
                         <button id="manage-items-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Gestionar Ítems</button>
+                        <button id="planta-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg">Planta</button>
                     </div>
                     <p id="last-order-hint" class="text-xs text-gray-400 text-center mt-2 px-4 w-full"></p>
 
@@ -517,6 +518,75 @@
                     <button id="order-finished-export-excel-btn" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-lg">Exportar Excel</button>
                  </div>
             </div>
+
+            <div id="planta-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0 bg-gray-800 p-4">
+                <div class="flex items-center justify-between mb-4 shrink-0 gap-2">
+                    <button type="button" id="planta-back-menu-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600 shrink-0" aria-label="Volver">&larr;</button>
+                    <h1 class="text-lg sm:text-xl font-bold text-center text-gray-100 flex-1">Pedido Planta</h1>
+                    <div class="flex gap-1 shrink-0">
+                        <button type="button" id="planta-open-history-btn" class="bg-gray-700 hover:bg-gray-600 text-white text-xs sm:text-sm font-bold py-2 px-2 sm:px-3 rounded-lg">Historial</button>
+                        <button type="button" id="planta-open-config-btn" class="bg-amber-700 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold py-2 px-2 sm:px-3 rounded-lg">Config</button>
+                    </div>
+                </div>
+                <div class="space-y-3 shrink-0 mb-3">
+                    <div>
+                        <label for="planta-order-date" class="block text-sm font-medium text-gray-300 mb-1">Fecha del pedido</label>
+                        <input type="date" id="planta-order-date" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                    </div>
+                    <div>
+                        <label for="planta-order-notes" class="block text-sm font-medium text-gray-300 mb-1">Notas (opcional)</label>
+                        <textarea id="planta-order-notes" rows="2" placeholder="Observaciones para el proveedor o la cocina..." class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 resize-y"></textarea>
+                    </div>
+                </div>
+                <div id="planta-items-container" class="flex-grow overflow-y-auto space-y-3 min-h-0 pr-1"></div>
+                <button type="button" id="planta-save-order-btn" class="mt-4 shrink-0 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar pedido</button>
+            </div>
+
+            <div id="planta-config-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0 bg-gray-800 p-4">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <button type="button" id="planta-config-back-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 class="text-xl font-bold text-center text-gray-100 flex-1">Configuración Planta</h1>
+                    <div class="w-8"></div>
+                </div>
+                <p class="text-xs text-gray-400 mb-3 shrink-0">Editá empaques por bolsa y por cajón. Marcá &quot;Mitad cajón&quot; si el proveedor acepta pedidos de 0,5 cajón.</p>
+                <div class="flex-grow overflow-y-auto min-h-0 mb-3 border border-gray-600 rounded-lg">
+                    <table class="w-full text-sm text-left text-gray-200">
+                        <thead class="bg-gray-900 text-gray-300 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-2">Nombre</th>
+                                <th class="p-2 w-20">Und/bolsa</th>
+                                <th class="p-2 w-20">Bolsas/cajón</th>
+                                <th class="p-2 w-16 text-center">½ cajón</th>
+                                <th class="p-2 w-20">Etiqueta</th>
+                                <th class="p-2 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="planta-config-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                    <button type="button" id="planta-config-add-item-btn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Agregar ítem</button>
+                    <button type="button" id="planta-config-save-btn" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar</button>
+                </div>
+            </div>
+
+            <div id="planta-history-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0 bg-gray-800 p-4">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <button type="button" id="planta-history-back-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 class="text-xl font-bold text-center text-gray-100 flex-1">Historial Planta</h1>
+                    <div class="w-8"></div>
+                </div>
+                <div id="planta-history-list" class="flex-grow overflow-y-auto space-y-2 min-h-0"></div>
+            </div>
+
+            <div id="planta-history-detail-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0 bg-gray-800 p-4">
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <button type="button" id="planta-detail-back-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
+                    <h1 id="planta-detail-title" class="text-lg font-bold text-center text-gray-100 flex-1 truncate px-2">Detalle</h1>
+                    <button type="button" id="planta-detail-pdf-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2 px-3 rounded-lg shrink-0">PDF</button>
+                </div>
+                <div id="planta-detail-content" class="flex-grow overflow-y-auto min-h-0 space-y-3"></div>
+            </div>
         </div>
 
         <div id="nav-buttons" class="mt-auto p-4 flex flex-wrap justify-center gap-2 pb-safe" style="display: none;">
@@ -584,7 +654,9 @@
             consumptionMismatches: [],
             cachedAlreadyOrderedByItemName: null,
             inventoryLocations: [],
-            itemLocationIds: {}
+            itemLocationIds: {},
+            plantaConfig: null,
+            plantaHistory: []
         };
         let itemsToCountQueue = [];
         let positionInQueue = -1;
@@ -599,6 +671,8 @@
         let draggedItemIndex = null;
         let historyDetailEntryIndex = null;
         let itemsExcelImportDraft = null;
+        let plantaFormValues = {};
+        let plantaHistoryDetailEntry = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const allViews = document.querySelectorAll('.view');
@@ -636,6 +710,28 @@
                 itemHistoryBtn: document.getElementById('item-history-btn'),
                 historyBtn: document.getElementById('history-btn'),
                 manageItemsBtn: document.getElementById('manage-items-btn'),
+                plantaBtn: document.getElementById('planta-btn'),
+                plantaView: document.getElementById('planta-view'),
+                plantaBackMenuBtn: document.getElementById('planta-back-menu-btn'),
+                plantaOpenHistoryBtn: document.getElementById('planta-open-history-btn'),
+                plantaOpenConfigBtn: document.getElementById('planta-open-config-btn'),
+                plantaOrderDate: document.getElementById('planta-order-date'),
+                plantaOrderNotes: document.getElementById('planta-order-notes'),
+                plantaItemsContainer: document.getElementById('planta-items-container'),
+                plantaSaveOrderBtn: document.getElementById('planta-save-order-btn'),
+                plantaConfigView: document.getElementById('planta-config-view'),
+                plantaConfigBackBtn: document.getElementById('planta-config-back-btn'),
+                plantaConfigTbody: document.getElementById('planta-config-tbody'),
+                plantaConfigAddItemBtn: document.getElementById('planta-config-add-item-btn'),
+                plantaConfigSaveBtn: document.getElementById('planta-config-save-btn'),
+                plantaHistoryView: document.getElementById('planta-history-view'),
+                plantaHistoryBackBtn: document.getElementById('planta-history-back-btn'),
+                plantaHistoryList: document.getElementById('planta-history-list'),
+                plantaHistoryDetailView: document.getElementById('planta-history-detail-view'),
+                plantaDetailBackBtn: document.getElementById('planta-detail-back-btn'),
+                plantaDetailTitle: document.getElementById('planta-detail-title'),
+                plantaDetailContent: document.getElementById('planta-detail-content'),
+                plantaDetailPdfBtn: document.getElementById('planta-detail-pdf-btn'),
                 inventoryDate: document.getElementById('inventory-date'),
                 inventoryTime: document.getElementById('inventory-time'),
                 startCountingBtn: document.getElementById('start-counting-btn'),
@@ -790,7 +886,10 @@
                 excelConfig: () => doc(db, 'users', userId, 'data', 'excelConfig'),
                 itemUsageData: () => doc(db, 'users', userId, 'data', 'itemUsageData'),
                 history: () => collection(db, 'users', userId, 'history'),
-                historyDoc: (id) => doc(db, 'users', userId, 'history', String(id))
+                historyDoc: (id) => doc(db, 'users', userId, 'history', String(id)),
+                plantaConfig: () => doc(db, 'users', userId, 'data', 'plantaConfig'),
+                plantaHistory: () => collection(db, 'users', userId, 'planta-history'),
+                plantaHistoryDoc: (id) => doc(db, 'users', userId, 'planta-history', String(id))
             };
 
             function normalizeCatalogKey(name) {
@@ -1198,6 +1297,34 @@
                         }
                     });
 
+                    unsubscribe.plantaConfig = onSnapshot(refs.plantaConfig(), (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            state.plantaConfig = Array.isArray(data.items) ? data : { items: [] };
+                        } else {
+                            const def = defaultPlantaConfigDoc();
+                            setDoc(refs.plantaConfig(), def);
+                            state.plantaConfig = def;
+                        }
+                        if (el.plantaView && !el.plantaView.classList.contains('hidden')) {
+                            renderPlantaView();
+                        }
+                        if (el.plantaConfigView && !el.plantaConfigView.classList.contains('hidden')) {
+                            renderPlantaConfigTable();
+                        }
+                    });
+
+                    const qPlantaHist = query(refs.plantaHistory(), orderBy('date', 'desc'));
+                    unsubscribe.plantaHistory = onSnapshot(qPlantaHist, (querySnapshot) => {
+                        state.plantaHistory = [];
+                        querySnapshot.forEach((d) => {
+                            state.plantaHistory.push({ ...d.data(), id: d.id });
+                        });
+                        if (el.plantaHistoryView && !el.plantaHistoryView.classList.contains('hidden')) {
+                            renderPlantaHistoryList();
+                        }
+                    });
+
                     el.loadingView.classList.add('hidden');
                     el.loginView.classList.add('hidden');
                     el.mainMenu.classList.remove('hidden');
@@ -1240,6 +1367,511 @@
                 el.toast.classList.remove('hidden');
                 setTimeout(() => el.toast.classList.add('hidden'), 3000);
             }
+
+            // === PLANTA ===
+            function defaultPlantaConfigDoc() {
+                return {
+                    items: [
+                        { id: 'planta_alitas', name: 'Alitas', unitsPerBag: 48, bagsPerCarton: 7, halfCarton: false, unitLabel: 'und' },
+                        { id: 'planta_filete', name: 'Filete', unitsPerBag: 18, bagsPerCarton: 12, halfCarton: true, unitLabel: 'und' },
+                        { id: 'planta_ruster', name: 'Ruster', unitsPerBag: 30, bagsPerCarton: 10, halfCarton: true, unitLabel: 'und' },
+                        { id: 'planta_pieza_c', name: 'Pieza C.', unitsPerBag: 18, bagsPerCarton: 8, halfCarton: false, unitLabel: 'und' },
+                        { id: 'planta_pieza_o', name: 'Pieza O.', unitsPerBag: 18, bagsPerCarton: 8, halfCarton: false, unitLabel: 'und' },
+                        { id: 'planta_pop', name: 'Pop', unitsPerBag: 1, bagsPerCarton: 22, halfCarton: true, unitLabel: 'kg' },
+                        { id: 'planta_strips', name: 'Strips', unitsPerBag: 36, bagsPerCarton: 10, halfCarton: false, unitLabel: 'und' }
+                    ]
+                };
+            }
+
+            function computePlantaLine(itemDef, stockNum, usoNum, pctNum) {
+                const unitsPerBag = Math.max(0.0001, Number(itemDef.unitsPerBag) || 1);
+                const bagsPerCarton = Math.max(1, Number(itemDef.bagsPerCarton) || 1);
+                const halfCarton = !!itemDef.halfCarton;
+                const usoAdj = usoNum * (1 + pctNum / 100);
+                const aPedir = Math.max(0, usoAdj - stockNum);
+                const bolsasExactas = aPedir / unitsPerBag;
+                const cajonesExactos = bolsasExactas / bagsPerCarton;
+                let cajonesOrden;
+                if (aPedir <= 0) {
+                    cajonesOrden = 0;
+                } else if (halfCarton) {
+                    cajonesOrden = Math.ceil(cajonesExactos * 2) / 2;
+                } else {
+                    cajonesOrden = Math.ceil(cajonesExactos);
+                }
+                const bolsasOrden = cajonesOrden * bagsPerCarton;
+                const unidadesOrden = bolsasOrden * unitsPerBag;
+                return {
+                    usoAdj,
+                    aPedir,
+                    bolsasExactas,
+                    cajonesExactos,
+                    cajonesOrden,
+                    bolsasOrden,
+                    unidadesOrden,
+                    unitsPerBag,
+                    bagsPerCarton
+                };
+            }
+
+            function plantaCoverageBadgeClass(days) {
+                if (days === null || days === undefined || !isFinite(days)) return 'bg-gray-600';
+                if (days >= 3) return 'bg-green-700';
+                if (days >= 1) return 'bg-yellow-700';
+                return 'bg-red-700';
+            }
+
+            function formatPlantaCartons(n) {
+                const num = Number(n) || 0;
+                const half = Math.abs((num * 2) % 1) < 0.001;
+                if (half || Number.isInteger(num)) {
+                    return num.toLocaleString('es-AR', { minimumFractionDigits: num % 1 ? 1 : 0, maximumFractionDigits: 1 });
+                }
+                return num.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+            }
+
+            function ensurePlantaFormShape() {
+                if (!state.plantaConfig || !Array.isArray(state.plantaConfig.items)) return;
+                const ids = new Set(state.plantaConfig.items.map((it) => it.id));
+                Object.keys(plantaFormValues).forEach((k) => {
+                    if (!ids.has(k)) delete plantaFormValues[k];
+                });
+                state.plantaConfig.items.forEach((it) => {
+                    if (!plantaFormValues[it.id]) {
+                        plantaFormValues[it.id] = { stock: '', uso: '', pct: '0' };
+                    }
+                });
+            }
+
+            function renderPlantaResultBlock(parent, itemDef, calc) {
+                parent.replaceChildren();
+                const uLab = itemDef.unitLabel || 'und';
+                const p1 = document.createElement('p');
+                const s1 = document.createElement('span');
+                s1.className = 'text-gray-500';
+                s1.textContent = 'Uso ajustado: ';
+                p1.append(s1, document.createTextNode(`${calc.usoAdj.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`));
+                const p2 = document.createElement('p');
+                const s2 = document.createElement('span');
+                s2.className = 'text-gray-500';
+                s2.textContent = 'Falta pedir: ';
+                p2.append(s2, document.createTextNode(`${calc.aPedir.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`));
+                const p3 = document.createElement('p');
+                p3.className = 'font-medium text-amber-200';
+                p3.textContent = `Pedido: ${calc.unidadesOrden.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab} · ${calc.bolsasOrden.toLocaleString('es-AR', { maximumFractionDigits: 2 })} bolsas · ${formatPlantaCartons(calc.cajonesOrden)} cajón(es)`;
+                parent.append(p1, p2, p3);
+            }
+
+            function renderPlantaView() {
+                if (!el.plantaItemsContainer) return;
+                if (!state.plantaConfig || !state.plantaConfig.items) {
+                    el.plantaItemsContainer.textContent = 'Cargando configuración…';
+                    return;
+                }
+                ensurePlantaFormShape();
+                if (!el.plantaOrderDate.value) {
+                    el.plantaOrderDate.value = new Date().toISOString().split('T')[0];
+                }
+                el.plantaItemsContainer.replaceChildren();
+                if (!state.plantaConfig.items.length) {
+                    const empty = document.createElement('p');
+                    empty.className = 'text-gray-400 text-sm text-center py-6';
+                    empty.textContent = 'No hay ítems configurados. Tocá «Config» para cargar o editar la lista.';
+                    el.plantaItemsContainer.appendChild(empty);
+                    return;
+                }
+                state.plantaConfig.items.forEach((itemDef) => {
+                    const fv = plantaFormValues[itemDef.id];
+                    const stockNum = parseFloat(String(fv.stock).replace(',', '.')) || 0;
+                    const usoNum = parseFloat(String(fv.uso).replace(',', '.')) || 0;
+                    const pctNum = parseFloat(String(fv.pct).replace(',', '.')) || 0;
+                    const uLab = itemDef.unitLabel || 'und';
+                    const calc = computePlantaLine(itemDef, stockNum, usoNum, pctNum);
+
+                    let covText = '—';
+                    let covDays = null;
+                    if (usoNum > 0) {
+                        covDays = stockNum / usoNum;
+                        covText = `${covDays.toLocaleString('es-AR', { maximumFractionDigits: 1 })} días`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-900 border border-gray-600 rounded-lg p-3 space-y-2';
+
+                    const head = document.createElement('div');
+                    head.className = 'flex justify-between items-start gap-2';
+                    const h3 = document.createElement('h3');
+                    h3.className = 'font-semibold text-gray-100';
+                    h3.textContent = itemDef.name;
+                    const badge = document.createElement('span');
+                    badge.className = `planta-cov-badge text-xs text-white px-2 py-0.5 rounded shrink-0 ${plantaCoverageBadgeClass(covDays)}`;
+                    badge.textContent = covText;
+                    head.append(h3, badge);
+
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm';
+
+                    function labeledInput(labelText, field, inputType = 'number') {
+                        const wrap = document.createElement('div');
+                        const lab = document.createElement('label');
+                        lab.className = 'block text-xs text-gray-400 mb-1';
+                        lab.textContent = labelText;
+                        const inp = document.createElement('input');
+                        inp.type = inputType;
+                        inp.className = 'w-full bg-gray-700 text-white p-2 rounded border border-gray-600';
+                        inp.dataset.plantaField = field;
+                        inp.dataset.plantaId = itemDef.id;
+                        inp.setAttribute('inputmode', 'decimal');
+                        inp.step = 'any';
+                        if (field !== 'pct') inp.min = '0';
+                        inp.value = fv[field] === '' && field !== 'pct' ? '' : String(fv[field]);
+                        inp.addEventListener('input', onPlantaFieldInput);
+                        wrap.append(lab, inp);
+                        return wrap;
+                    }
+
+                    grid.append(
+                        labeledInput(`Stock (${uLab})`, 'stock'),
+                        labeledInput(`Uso (${uLab})`, 'uso'),
+                        labeledInput('Ajuste %', 'pct')
+                    );
+
+                    const res = document.createElement('div');
+                    res.className = 'text-sm text-gray-300 border-t border-gray-700 pt-2 space-y-1';
+                    res.dataset.plantaResult = '1';
+                    renderPlantaResultBlock(res, itemDef, calc);
+
+                    card.append(head, grid, res);
+                    el.plantaItemsContainer.appendChild(card);
+                });
+            }
+
+            function onPlantaFieldInput(e) {
+                const t = e.target;
+                const id = t.dataset.plantaId;
+                const field = t.dataset.plantaField;
+                if (!id || !field) return;
+                if (!plantaFormValues[id]) plantaFormValues[id] = { stock: '', uso: '', pct: '0' };
+                plantaFormValues[id][field] = t.value;
+
+                const itemDef = state.plantaConfig.items.find((x) => x.id === id);
+                if (!itemDef) return;
+                const fv = plantaFormValues[id];
+                const stockNum = parseFloat(String(fv.stock).replace(',', '.')) || 0;
+                const usoNum = parseFloat(String(fv.uso).replace(',', '.')) || 0;
+                const pctNum = parseFloat(String(fv.pct).replace(',', '.')) || 0;
+                const calc = computePlantaLine(itemDef, stockNum, usoNum, pctNum);
+                const card = t.closest('.bg-gray-900');
+                const res = card && card.querySelector('[data-planta-result="1"]');
+                if (res) renderPlantaResultBlock(res, itemDef, calc);
+
+                const badge = card && card.querySelector('.planta-cov-badge');
+                if (badge) {
+                    let covDays = null;
+                    let covText = '—';
+                    if (usoNum > 0) {
+                        covDays = stockNum / usoNum;
+                        covText = `${covDays.toLocaleString('es-AR', { maximumFractionDigits: 1 })} días`;
+                    }
+                    badge.className = `planta-cov-badge text-xs text-white px-2 py-0.5 rounded shrink-0 ${plantaCoverageBadgeClass(covDays)}`;
+                    badge.textContent = covText;
+                }
+            }
+
+            function collectPlantaOrderLines() {
+                ensurePlantaFormShape();
+                const lines = [];
+                state.plantaConfig.items.forEach((itemDef) => {
+                    const fv = plantaFormValues[itemDef.id];
+                    const stockNum = parseFloat(String(fv.stock).replace(',', '.')) || 0;
+                    const usoNum = parseFloat(String(fv.uso).replace(',', '.')) || 0;
+                    const pctNum = parseFloat(String(fv.pct).replace(',', '.')) || 0;
+                    const calc = computePlantaLine(itemDef, stockNum, usoNum, pctNum);
+                    const uLab = itemDef.unitLabel || 'und';
+                    lines.push({
+                        itemId: itemDef.id,
+                        name: itemDef.name,
+                        unitLabel: uLab,
+                        stock: stockNum,
+                        uso: usoNum,
+                        pctAdj: pctNum,
+                        usoAjustado: calc.usoAdj,
+                        aPedir: calc.aPedir,
+                        cajonesPedido: calc.cajonesOrden,
+                        bolsasPedido: calc.bolsasOrden,
+                        unidadesPedido: calc.unidadesOrden,
+                        unitsPerBag: itemDef.unitsPerBag,
+                        bagsPerCarton: itemDef.bagsPerCarton,
+                        halfCarton: !!itemDef.halfCarton
+                    });
+                });
+                return lines;
+            }
+
+            function renderPlantaConfigTable() {
+                if (!el.plantaConfigTbody) return;
+                if (!state.plantaConfig || !Array.isArray(state.plantaConfig.items)) {
+                    el.plantaConfigTbody.innerHTML = '';
+                    return;
+                }
+                el.plantaConfigTbody.replaceChildren();
+                state.plantaConfig.items.forEach((row) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-t border-gray-700';
+                    tr.dataset.plantaRowId = row.id;
+
+                    const tdName = document.createElement('td');
+                    tdName.className = 'p-1';
+                    const inName = document.createElement('input');
+                    inName.type = 'text';
+                    inName.className = 'w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-sm';
+                    inName.value = row.name || '';
+                    inName.dataset.cfgField = 'name';
+                    tdName.appendChild(inName);
+
+                    const tdUb = document.createElement('td');
+                    tdUb.className = 'p-1';
+                    const inUb = document.createElement('input');
+                    inUb.type = 'number';
+                    inUb.step = 'any';
+                    inUb.min = '0.0001';
+                    inUb.className = 'w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-sm';
+                    inUb.value = String(row.unitsPerBag ?? '');
+                    inUb.dataset.cfgField = 'unitsPerBag';
+                    tdUb.appendChild(inUb);
+
+                    const tdBc = document.createElement('td');
+                    tdBc.className = 'p-1';
+                    const inBc = document.createElement('input');
+                    inBc.type = 'number';
+                    inBc.step = '1';
+                    inBc.min = '1';
+                    inBc.className = 'w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-sm';
+                    inBc.value = String(row.bagsPerCarton ?? '');
+                    inBc.dataset.cfgField = 'bagsPerCarton';
+                    tdBc.appendChild(inBc);
+
+                    const tdHalf = document.createElement('td');
+                    tdHalf.className = 'p-1 text-center';
+                    const inHalf = document.createElement('input');
+                    inHalf.type = 'checkbox';
+                    inHalf.className = 'w-5 h-5 accent-amber-500';
+                    inHalf.checked = !!row.halfCarton;
+                    inHalf.dataset.cfgField = 'halfCarton';
+                    tdHalf.appendChild(inHalf);
+
+                    const tdLab = document.createElement('td');
+                    tdLab.className = 'p-1';
+                    const inLab = document.createElement('input');
+                    inLab.type = 'text';
+                    inLab.className = 'w-full bg-gray-700 text-white p-2 rounded border border-gray-600 text-sm';
+                    inLab.value = row.unitLabel || 'und';
+                    inLab.dataset.cfgField = 'unitLabel';
+                    tdLab.appendChild(inLab);
+
+                    const tdDel = document.createElement('td');
+                    tdDel.className = 'p-1 text-center';
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = 'text-red-400 hover:text-red-300 font-bold px-1';
+                    delBtn.textContent = '×';
+                    delBtn.title = 'Quitar ítem';
+                    delBtn.addEventListener('click', () => {
+                        const i = state.plantaConfig.items.findIndex((x) => x.id === row.id);
+                        if (i >= 0) state.plantaConfig.items.splice(i, 1);
+                        delete plantaFormValues[row.id];
+                        renderPlantaConfigTable();
+                    });
+                    tdDel.appendChild(delBtn);
+
+                    tr.append(tdName, tdUb, tdBc, tdHalf, tdLab, tdDel);
+                    el.plantaConfigTbody.appendChild(tr);
+                });
+            }
+
+            function readPlantaConfigFromTable() {
+                const rows = el.plantaConfigTbody.querySelectorAll('tr');
+                const items = [];
+                rows.forEach((tr, idx) => {
+                    const stableId = tr.dataset.plantaRowId || `planta_${Date.now()}_${idx}`;
+                    const idInput = tr.querySelector('[data-cfg-field="name"]');
+                    const name = idInput && idInput.value.trim() ? idInput.value.trim() : `Ítem ${idx + 1}`;
+                    const unitsPerBag = parseFloat(tr.querySelector('[data-cfg-field="unitsPerBag"]')?.value.replace(',', '.')) || 1;
+                    const bagsPerCarton = parseInt(tr.querySelector('[data-cfg-field="bagsPerCarton"]')?.value, 10) || 1;
+                    const halfCarton = !!tr.querySelector('[data-cfg-field="halfCarton"]')?.checked;
+                    const unitLabel = (tr.querySelector('[data-cfg-field="unitLabel"]')?.value || 'und').trim() || 'und';
+                    items.push({
+                        id: stableId,
+                        name,
+                        unitsPerBag: Math.max(0.0001, unitsPerBag),
+                        bagsPerCarton: Math.max(1, bagsPerCarton),
+                        halfCarton,
+                        unitLabel
+                    });
+                });
+                return items;
+            }
+
+            async function savePlantaConfigFromUi() {
+                if (!userId) return;
+                const items = readPlantaConfigFromTable();
+                if (items.length === 0) {
+                    alert('Agregá al menos un ítem.');
+                    return;
+                }
+                try {
+                    await setDoc(refs.plantaConfig(), { items });
+                    showToast('Configuración Planta guardada.');
+                    switchView(el.plantaView);
+                    renderPlantaView();
+                } catch (err) {
+                    console.error(err);
+                    alert('No se pudo guardar la configuración.');
+                }
+            }
+
+            function renderPlantaHistoryList() {
+                if (!el.plantaHistoryList) return;
+                el.plantaHistoryList.replaceChildren();
+                if (!state.plantaHistory.length) {
+                    const p = document.createElement('p');
+                    p.className = 'text-gray-400 text-sm text-center py-8';
+                    p.textContent = 'No hay pedidos guardados aún.';
+                    el.plantaHistoryList.appendChild(p);
+                    return;
+                }
+                state.plantaHistory.forEach((entry) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full text-left bg-gray-900 border border-gray-600 rounded-lg p-3 hover:bg-gray-700';
+                    const d = entry.orderForDate ? new Date(entry.orderForDate + 'T12:00:00') : new Date(entry.date);
+                    const dateStr = isNaN(d.getTime()) ? (entry.orderForDate || '') : d.toLocaleDateString('es-AR');
+                    const totalC = typeof entry.totalCartons === 'number' ? entry.totalCartons : (entry.items || []).reduce((s, x) => s + (Number(x.cajonesPedido) || 0), 0);
+                    const t1 = document.createElement('div');
+                    t1.className = 'font-semibold text-gray-100';
+                    t1.textContent = dateStr;
+                    const t2 = document.createElement('div');
+                    t2.className = 'text-xs text-gray-400 mt-1';
+                    t2.textContent = `${(entry.items || []).length} ítems · ${totalC.toLocaleString('es-AR', { maximumFractionDigits: 1 })} cajones tot.`;
+                    btn.append(t1, t2);
+                    btn.addEventListener('click', () => {
+                        plantaHistoryDetailEntry = entry;
+                        renderPlantaHistoryDetail();
+                        switchView(el.plantaHistoryDetailView);
+                    });
+                    el.plantaHistoryList.appendChild(btn);
+                });
+            }
+
+            function renderPlantaHistoryDetail() {
+                const entry = plantaHistoryDetailEntry;
+                if (!entry || !el.plantaDetailContent) return;
+                const d = entry.orderForDate ? new Date(entry.orderForDate + 'T12:00:00') : new Date(entry.date);
+                const dateStr = isNaN(d.getTime()) ? (entry.orderForDate || '') : d.toLocaleDateString('es-AR');
+                el.plantaDetailTitle.textContent = `Pedido ${dateStr}`;
+                el.plantaDetailContent.replaceChildren();
+                if (entry.notes) {
+                    const note = document.createElement('p');
+                    note.className = 'text-sm text-gray-300 bg-gray-900 p-2 rounded border border-gray-600';
+                    note.textContent = entry.notes;
+                    el.plantaDetailContent.appendChild(note);
+                }
+                (entry.items || []).forEach((line) => {
+                    const box = document.createElement('div');
+                    box.className = 'bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm text-gray-200';
+                    const u = line.unitLabel || 'und';
+                    const title = document.createElement('div');
+                    title.className = 'font-semibold text-gray-100 mb-2';
+                    title.textContent = line.name || '';
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-2 gap-1 text-xs text-gray-400';
+                    const ua = line.usoAjustado != null ? Number(line.usoAjustado).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
+                    grid.innerHTML = `<span>Stock: ${line.stock} ${u}</span><span>Uso: ${line.uso} ${u}</span>
+                        <span>Ajuste: ${line.pctAdj}%</span><span>Uso aj.: ${ua} ${u}</span>`;
+                    const ped = document.createElement('div');
+                    ped.className = 'mt-2 text-amber-200 font-medium';
+                    const up = line.unidadesPedido != null ? Number(line.unidadesPedido).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
+                    const bp = line.bolsasPedido != null ? Number(line.bolsasPedido).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
+                    ped.textContent = `Pedido: ${up} ${u} · ${bp} bolsas · ${formatPlantaCartons(line.cajonesPedido)} cajón(es)`;
+                    box.append(title, grid, ped);
+                    el.plantaDetailContent.appendChild(box);
+                });
+            }
+
+            function exportPlantaOrderPdf(entry) {
+                if (!entry || !entry.items || !entry.items.length) {
+                    alert('No hay datos para el PDF.');
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const d = entry.orderForDate ? new Date(entry.orderForDate + 'T12:00:00') : new Date(entry.date);
+                const dateStr = isNaN(d.getTime()) ? String(entry.orderForDate || '') : d.toLocaleDateString('es-AR');
+                doc.text(`Pedido Planta — ${dateStr}`, 14, 18);
+                let y = 26;
+                if (entry.notes) {
+                    doc.setFontSize(10);
+                    doc.text(`Notas: ${entry.notes}`, 14, y);
+                    y += 8;
+                }
+                doc.setFontSize(11);
+                const body = entry.items.map((line) => {
+                    const u = line.unitLabel || 'und';
+                    return [
+                        line.name,
+                        String(line.stock),
+                        String(line.uso),
+                        `${line.pctAdj}%`,
+                        line.usoAjustado?.toLocaleString?.('es-AR') ?? String(line.usoAjustado),
+                        line.aPedir?.toLocaleString?.('es-AR') ?? String(line.aPedir),
+                        formatPlantaCartons(line.cajonesPedido),
+                        line.bolsasPedido?.toLocaleString?.('es-AR') ?? String(line.bolsasPedido),
+                        line.unidadesPedido?.toLocaleString?.('es-AR') ?? String(line.unidadesPedido)
+                    ];
+                });
+                doc.autoTable({
+                    head: [['Ítem', 'Stock', 'Uso', '%', 'Uso aj.', 'Falta', 'Cajones', 'Bolsas', 'Und. pedido']],
+                    body,
+                    startY: y,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [55, 65, 81] }
+                });
+                const stamp = entry.orderForDate || (entry.date && entry.date.slice(0, 10)) || String(entry.id || Date.now());
+                doc.save(`planta_pedido_${stamp}.pdf`);
+            }
+
+            async function savePlantaOrderToFirestore() {
+                if (!userId) return;
+                if (!el.plantaOrderDate.value) {
+                    alert('Elegí la fecha del pedido.');
+                    return;
+                }
+                if (!state.plantaConfig || !state.plantaConfig.items || !state.plantaConfig.items.length) {
+                    alert('No hay ítems en la configuración. Abrí Config y guardá al menos un ítem.');
+                    return;
+                }
+                const lines = collectPlantaOrderLines();
+                const totalCartons = lines.reduce((s, x) => s + (Number(x.cajonesPedido) || 0), 0);
+                const id = String(Date.now());
+                const payload = {
+                    type: 'planta-order',
+                    id,
+                    date: new Date().toISOString(),
+                    orderForDate: el.plantaOrderDate.value,
+                    notes: (el.plantaOrderNotes.value || '').trim(),
+                    items: lines,
+                    totalCartons
+                };
+                try {
+                    await setDoc(refs.plantaHistoryDoc(id), payload);
+                    showToast('Pedido Planta guardado.');
+                } catch (err) {
+                    console.error(err);
+                    alert('No se pudo guardar el pedido.');
+                }
+            }
+
+            // === /PLANTA ===
 
             function renderCurrentItem(mode) {
                 const process = mode === 'order' ? state.currentOrder : state.currentInventory;
@@ -2785,6 +3417,49 @@
                 switchView(el.history);
             });
             el.manageItemsBtn.addEventListener('click', () => { renderManageItemsList(); switchView(el.manageItems); });
+
+            el.plantaBtn.addEventListener('click', () => {
+                renderPlantaView();
+                switchView(el.plantaView);
+            });
+            el.plantaBackMenuBtn.addEventListener('click', () => switchView(el.mainMenu));
+            el.plantaOpenHistoryBtn.addEventListener('click', () => {
+                renderPlantaHistoryList();
+                switchView(el.plantaHistoryView);
+            });
+            el.plantaOpenConfigBtn.addEventListener('click', () => {
+                renderPlantaConfigTable();
+                switchView(el.plantaConfigView);
+            });
+            el.plantaConfigBackBtn.addEventListener('click', () => {
+                switchView(el.plantaView);
+                renderPlantaView();
+            });
+            el.plantaHistoryBackBtn.addEventListener('click', () => switchView(el.plantaView));
+            el.plantaDetailBackBtn.addEventListener('click', () => {
+                renderPlantaHistoryList();
+                switchView(el.plantaHistoryView);
+            });
+            el.plantaConfigAddItemBtn.addEventListener('click', () => {
+                if (!state.plantaConfig) state.plantaConfig = { items: [] };
+                if (!Array.isArray(state.plantaConfig.items)) state.plantaConfig.items = [];
+                const newId = `planta_${Date.now()}`;
+                state.plantaConfig.items.push({
+                    id: newId,
+                    name: 'Nuevo ítem',
+                    unitsPerBag: 1,
+                    bagsPerCarton: 1,
+                    halfCarton: false,
+                    unitLabel: 'und'
+                });
+                plantaFormValues[newId] = { stock: '', uso: '', pct: '0' };
+                renderPlantaConfigTable();
+            });
+            el.plantaConfigSaveBtn.addEventListener('click', () => savePlantaConfigFromUi());
+            el.plantaSaveOrderBtn.addEventListener('click', () => savePlantaOrderToFirestore());
+            el.plantaDetailPdfBtn.addEventListener('click', () => {
+                if (plantaHistoryDetailEntry) exportPlantaOrderPdf(plantaHistoryDetailEntry);
+            });
 
             function renderItemHistorySetup(searchTerm = '') {
                 const listEl = document.getElementById('item-history-item-list');
