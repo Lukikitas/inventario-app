@@ -1383,12 +1383,29 @@
                 };
             }
 
-            function computePlantaLine(itemDef, stockNum, usoNum, pctNum) {
+            function plantaParseNum(s) {
+                return parseFloat(String(s ?? '').replace(',', '.')) || 0;
+            }
+
+            function getPlantaUsoTotal(fv) {
+                if (!fv) return 0;
+                if (fv.usoByDays && Array.isArray(fv.usoDays)) {
+                    return fv.usoDays.reduce((sum, d) => sum + plantaParseNum(d), 0);
+                }
+                return plantaParseNum(fv.uso);
+            }
+
+            function getPlantaStockEfectivo(fv) {
+                if (!fv) return 0;
+                return plantaParseNum(fv.stock) + plantaParseNum(fv.pendingIncoming);
+            }
+
+            function computePlantaLine(itemDef, stockEfectivoNum, usoNum, pctNum) {
                 const unitsPerBag = Math.max(0.0001, Number(itemDef.unitsPerBag) || 1);
                 const bagsPerCarton = Math.max(1, Number(itemDef.bagsPerCarton) || 1);
                 const halfCarton = !!itemDef.halfCarton;
                 const usoAdj = usoNum * (1 + pctNum / 100);
-                const aPedir = Math.max(0, usoAdj - stockNum);
+                const aPedir = Math.max(0, usoAdj - stockEfectivoNum);
                 const bolsasExactas = aPedir / unitsPerBag;
                 const cajonesExactos = bolsasExactas / bagsPerCarton;
                 let cajonesOrden;
@@ -1438,14 +1455,41 @@
                 });
                 state.plantaConfig.items.forEach((it) => {
                     if (!plantaFormValues[it.id]) {
-                        plantaFormValues[it.id] = { stock: '', uso: '', pct: '0' };
+                        plantaFormValues[it.id] = {
+                            stock: '',
+                            pendingIncoming: '',
+                            uso: '',
+                            pct: '0',
+                            usoByDays: false,
+                            usoDays: ['']
+                        };
+                    } else {
+                        const v = plantaFormValues[it.id];
+                        if (v.pendingIncoming === undefined) v.pendingIncoming = '';
+                        if (typeof v.usoByDays !== 'boolean') v.usoByDays = false;
+                        if (!Array.isArray(v.usoDays) || v.usoDays.length === 0) v.usoDays = [''];
                     }
                 });
             }
 
-            function renderPlantaResultBlock(parent, itemDef, calc) {
+            function renderPlantaResultBlock(parent, itemDef, calc, ctx) {
                 parent.replaceChildren();
                 const uLab = itemDef.unitLabel || 'und';
+                if (ctx) {
+                    const pe = document.createElement('p');
+                    pe.className = 'text-xs text-gray-500 mb-1';
+                    pe.textContent = `Stock para el cálculo: ${ctx.stockEfectivo.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab} (${ctx.stockFisico.toLocaleString('es-AR', { maximumFractionDigits: 2 })} en planta + ${ctx.pending.toLocaleString('es-AR', { maximumFractionDigits: 2 })} pendiente)`;
+                    parent.appendChild(pe);
+                    if (ctx.usoByDays && ctx.usoDaysList && ctx.usoDaysList.length) {
+                        const pu = document.createElement('p');
+                        pu.className = 'text-xs text-gray-500 mb-1';
+                        const parts = ctx.usoDaysList
+                            .map((v, i) => `Día ${i + 1}: ${plantaParseNum(v).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`)
+                            .join(' · ');
+                        pu.textContent = `Uso desglosado: ${parts} → total ${ctx.usoTotal.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                        parent.appendChild(pu);
+                    }
+                }
                 const p1 = document.createElement('p');
                 const s1 = document.createElement('span');
                 s1.className = 'text-gray-500';
@@ -1482,21 +1526,32 @@
                 }
                 state.plantaConfig.items.forEach((itemDef) => {
                     const fv = plantaFormValues[itemDef.id];
-                    const stockNum = parseFloat(String(fv.stock).replace(',', '.')) || 0;
-                    const usoNum = parseFloat(String(fv.uso).replace(',', '.')) || 0;
-                    const pctNum = parseFloat(String(fv.pct).replace(',', '.')) || 0;
+                    const stockFisico = plantaParseNum(fv.stock);
+                    const pending = plantaParseNum(fv.pendingIncoming);
+                    const stockEfectivo = getPlantaStockEfectivo(fv);
+                    const usoNum = getPlantaUsoTotal(fv);
+                    const pctNum = plantaParseNum(fv.pct);
                     const uLab = itemDef.unitLabel || 'und';
-                    const calc = computePlantaLine(itemDef, stockNum, usoNum, pctNum);
+                    const calc = computePlantaLine(itemDef, stockEfectivo, usoNum, pctNum);
+                    const ctx = {
+                        stockFisico,
+                        pending,
+                        stockEfectivo,
+                        usoTotal: usoNum,
+                        usoByDays: !!fv.usoByDays,
+                        usoDaysList: fv.usoByDays ? [...(fv.usoDays || [])] : []
+                    };
 
                     let covText = '—';
                     let covDays = null;
                     if (usoNum > 0) {
-                        covDays = stockNum / usoNum;
+                        covDays = stockEfectivo / usoNum;
                         covText = `${covDays.toLocaleString('es-AR', { maximumFractionDigits: 1 })} días`;
                     }
 
                     const card = document.createElement('div');
                     card.className = 'bg-gray-900 border border-gray-600 rounded-lg p-3 space-y-2';
+                    card.dataset.plantaCardId = itemDef.id;
 
                     const head = document.createElement('div');
                     head.className = 'flex justify-between items-start gap-2';
@@ -1511,7 +1566,7 @@
                     const grid = document.createElement('div');
                     grid.className = 'grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm';
 
-                    function labeledInput(labelText, field, inputType = 'number') {
+                    function labeledInput(labelText, field, inputType = 'number', opts = {}) {
                         const wrap = document.createElement('div');
                         const lab = document.createElement('label');
                         lab.className = 'block text-xs text-gray-400 mb-1';
@@ -1523,7 +1578,7 @@
                         inp.dataset.plantaId = itemDef.id;
                         inp.setAttribute('inputmode', 'decimal');
                         inp.step = 'any';
-                        if (field !== 'pct') inp.min = '0';
+                        if (field !== 'pct' && opts.min !== false) inp.min = '0';
                         inp.value = fv[field] === '' && field !== 'pct' ? '' : String(fv[field]);
                         inp.addEventListener('input', onPlantaFieldInput);
                         wrap.append(lab, inp);
@@ -1532,16 +1587,110 @@
 
                     grid.append(
                         labeledInput(`Stock (${uLab})`, 'stock'),
-                        labeledInput(`Uso (${uLab})`, 'uso'),
-                        labeledInput('Ajuste %', 'pct')
+                        labeledInput(`Pendiente de entrar (${uLab})`, 'pendingIncoming'),
+                        labeledInput('Ajuste %', 'pct', 'number', { min: false })
                     );
+
+                    const usoWrap = document.createElement('div');
+                    usoWrap.className = 'space-y-2 text-sm';
+
+                    const toggleRow = document.createElement('label');
+                    toggleRow.className = 'flex items-center gap-2 cursor-pointer text-gray-300';
+                    const usoByDaysCh = document.createElement('input');
+                    usoByDaysCh.type = 'checkbox';
+                    usoByDaysCh.className = 'w-5 h-5 accent-amber-500 shrink-0';
+                    usoByDaysCh.checked = !!fv.usoByDays;
+                    usoByDaysCh.addEventListener('change', () => {
+                        const v = plantaFormValues[itemDef.id];
+                        if (usoByDaysCh.checked) {
+                            v.usoByDays = true;
+                            const u = plantaParseNum(v.uso);
+                            v.usoDays = u > 0 ? [String(v.uso)] : [''];
+                        } else {
+                            const sumUso = getPlantaUsoTotal({ ...v, usoByDays: true });
+                            v.uso = String(sumUso);
+                            v.usoByDays = false;
+                        }
+                        renderPlantaView();
+                    });
+                    const spanT = document.createElement('span');
+                    spanT.textContent = 'Desglosar uso en días';
+                    toggleRow.append(usoByDaysCh, spanT);
+                    usoWrap.appendChild(toggleRow);
+
+                    if (!fv.usoByDays) {
+                        const singleUso = labeledInput(`Uso total (${uLab})`, 'uso');
+                        usoWrap.appendChild(singleUso);
+                    } else {
+                        const daysBox = document.createElement('div');
+                        daysBox.className = 'space-y-2 pl-1 border-l-2 border-amber-600/50';
+                        const daysTitle = document.createElement('p');
+                        daysTitle.className = 'text-xs text-gray-400';
+                        daysTitle.textContent = 'Uso por día (el total es la suma):';
+                        daysBox.appendChild(daysTitle);
+                        const days = Array.isArray(fv.usoDays) && fv.usoDays.length ? fv.usoDays : [''];
+                        days.forEach((dayVal, dayIdx) => {
+                            const row = document.createElement('div');
+                            row.className = 'flex gap-2 items-end';
+                            const labD = document.createElement('label');
+                            labD.className = 'flex-1 min-w-0';
+                            const lt = document.createElement('span');
+                            lt.className = 'block text-xs text-gray-400 mb-1';
+                            lt.textContent = `Día ${dayIdx + 1}`;
+                            const inpD = document.createElement('input');
+                            inpD.type = 'number';
+                            inpD.className = 'w-full bg-gray-700 text-white p-2 rounded border border-gray-600';
+                            inpD.dataset.plantaId = itemDef.id;
+                            inpD.dataset.plantaField = 'usoDay';
+                            inpD.dataset.plantaDayIndex = String(dayIdx);
+                            inpD.setAttribute('inputmode', 'decimal');
+                            inpD.step = 'any';
+                            inpD.min = '0';
+                            inpD.value = dayVal === '' ? '' : String(dayVal);
+                            inpD.addEventListener('input', onPlantaFieldInput);
+                            labD.append(lt, inpD);
+                            row.appendChild(labD);
+                            if (days.length > 1) {
+                                const rm = document.createElement('button');
+                                rm.type = 'button';
+                                rm.className = 'shrink-0 mb-0.5 text-red-400 hover:text-red-300 font-bold px-2 py-2 rounded bg-gray-800';
+                                rm.textContent = '×';
+                                rm.title = 'Quitar día';
+                                rm.addEventListener('click', () => {
+                                    const v2 = plantaFormValues[itemDef.id];
+                                    if (!Array.isArray(v2.usoDays)) v2.usoDays = [''];
+                                    v2.usoDays.splice(dayIdx, 1);
+                                    if (v2.usoDays.length === 0) v2.usoDays = [''];
+                                    renderPlantaView();
+                                });
+                                row.appendChild(rm);
+                            }
+                            daysBox.appendChild(row);
+                        });
+                        const addDayBtn = document.createElement('button');
+                        addDayBtn.type = 'button';
+                        addDayBtn.className = 'w-full sm:w-auto mt-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-2 px-3 rounded-lg';
+                        addDayBtn.textContent = '+ Agregar día';
+                        addDayBtn.addEventListener('click', () => {
+                            const v2 = plantaFormValues[itemDef.id];
+                            if (!Array.isArray(v2.usoDays)) v2.usoDays = [''];
+                            v2.usoDays.push('');
+                            renderPlantaView();
+                        });
+                        daysBox.appendChild(addDayBtn);
+                        const sumP = document.createElement('p');
+                        sumP.className = 'planta-uso-sum text-xs text-amber-200/90 font-medium';
+                        sumP.textContent = `Uso total: ${usoNum.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                        daysBox.appendChild(sumP);
+                        usoWrap.appendChild(daysBox);
+                    }
 
                     const res = document.createElement('div');
                     res.className = 'text-sm text-gray-300 border-t border-gray-700 pt-2 space-y-1';
                     res.dataset.plantaResult = '1';
-                    renderPlantaResultBlock(res, itemDef, calc);
+                    renderPlantaResultBlock(res, itemDef, calc, ctx);
 
-                    card.append(head, grid, res);
+                    card.append(head, grid, usoWrap, res);
                     el.plantaItemsContainer.appendChild(card);
                 });
             }
@@ -1551,26 +1700,59 @@
                 const id = t.dataset.plantaId;
                 const field = t.dataset.plantaField;
                 if (!id || !field) return;
-                if (!plantaFormValues[id]) plantaFormValues[id] = { stock: '', uso: '', pct: '0' };
-                plantaFormValues[id][field] = t.value;
+                if (!plantaFormValues[id]) {
+                    plantaFormValues[id] = {
+                        stock: '',
+                        pendingIncoming: '',
+                        uso: '',
+                        pct: '0',
+                        usoByDays: false,
+                        usoDays: ['']
+                    };
+                }
+                const fv = plantaFormValues[id];
+                if (field === 'usoDay') {
+                    const idx = parseInt(t.dataset.plantaDayIndex, 10);
+                    if (!Array.isArray(fv.usoDays)) fv.usoDays = [''];
+                    if (idx >= 0 && idx < fv.usoDays.length) fv.usoDays[idx] = t.value;
+                } else {
+                    fv[field] = t.value;
+                }
 
                 const itemDef = state.plantaConfig.items.find((x) => x.id === id);
                 if (!itemDef) return;
-                const fv = plantaFormValues[id];
-                const stockNum = parseFloat(String(fv.stock).replace(',', '.')) || 0;
-                const usoNum = parseFloat(String(fv.uso).replace(',', '.')) || 0;
-                const pctNum = parseFloat(String(fv.pct).replace(',', '.')) || 0;
-                const calc = computePlantaLine(itemDef, stockNum, usoNum, pctNum);
-                const card = t.closest('.bg-gray-900');
+                const stockFisico = plantaParseNum(fv.stock);
+                const pending = plantaParseNum(fv.pendingIncoming);
+                const stockEfectivo = getPlantaStockEfectivo(fv);
+                const usoNum = getPlantaUsoTotal(fv);
+                const pctNum = plantaParseNum(fv.pct);
+                const calc = computePlantaLine(itemDef, stockEfectivo, usoNum, pctNum);
+                const uLab = itemDef.unitLabel || 'und';
+                const ctx = {
+                    stockFisico,
+                    pending,
+                    stockEfectivo,
+                    usoTotal: usoNum,
+                    usoByDays: !!fv.usoByDays,
+                    usoDaysList: fv.usoByDays ? [...(fv.usoDays || [])] : []
+                };
+                const card = t.closest('[data-planta-card-id]');
                 const res = card && card.querySelector('[data-planta-result="1"]');
-                if (res) renderPlantaResultBlock(res, itemDef, calc);
+                if (res) renderPlantaResultBlock(res, itemDef, calc, ctx);
+
+                if (field === 'usoDay') {
+                    const sumEl = card && card.querySelector('.planta-uso-sum');
+                    if (sumEl) {
+                        sumEl.textContent = `Uso total: ${usoNum.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                    }
+                }
 
                 const badge = card && card.querySelector('.planta-cov-badge');
                 if (badge) {
                     let covDays = null;
                     let covText = '—';
                     if (usoNum > 0) {
-                        covDays = stockNum / usoNum;
+                        covDays = stockEfectivo / usoNum;
                         covText = `${covDays.toLocaleString('es-AR', { maximumFractionDigits: 1 })} días`;
                     }
                     badge.className = `planta-cov-badge text-xs text-white px-2 py-0.5 rounded shrink-0 ${plantaCoverageBadgeClass(covDays)}`;
@@ -1583,17 +1765,30 @@
                 const lines = [];
                 state.plantaConfig.items.forEach((itemDef) => {
                     const fv = plantaFormValues[itemDef.id];
-                    const stockNum = parseFloat(String(fv.stock).replace(',', '.')) || 0;
-                    const usoNum = parseFloat(String(fv.uso).replace(',', '.')) || 0;
-                    const pctNum = parseFloat(String(fv.pct).replace(',', '.')) || 0;
-                    const calc = computePlantaLine(itemDef, stockNum, usoNum, pctNum);
+                    const stockFisico = plantaParseNum(fv.stock);
+                    const pending = plantaParseNum(fv.pendingIncoming);
+                    const stockEfectivo = getPlantaStockEfectivo(fv);
+                    const usoNum = getPlantaUsoTotal(fv);
+                    const pctNum = plantaParseNum(fv.pct);
+                    const calc = computePlantaLine(itemDef, stockEfectivo, usoNum, pctNum);
                     const uLab = itemDef.unitLabel || 'und';
+                    const usoDaysSnapshot = fv.usoByDays && Array.isArray(fv.usoDays)
+                        ? fv.usoDays.map((d) => plantaParseNum(d))
+                        : null;
+                    const usoDesgloseText = fv.usoByDays && Array.isArray(fv.usoDays)
+                        ? fv.usoDays.map((d, i) => `D${i + 1}:${plantaParseNum(d)}`).join(' ')
+                        : '';
                     lines.push({
                         itemId: itemDef.id,
                         name: itemDef.name,
                         unitLabel: uLab,
-                        stock: stockNum,
+                        stock: stockFisico,
+                        pendingIncoming: pending,
+                        stockEfectivo,
                         uso: usoNum,
+                        usoByDays: !!fv.usoByDays,
+                        usoDays: usoDaysSnapshot,
+                        usoDesgloseText,
                         pctAdj: pctNum,
                         usoAjustado: calc.usoAdj,
                         aPedir: calc.aPedir,
@@ -1785,9 +1980,23 @@
                     title.textContent = line.name || '';
                     const grid = document.createElement('div');
                     grid.className = 'grid grid-cols-2 gap-1 text-xs text-gray-400';
+                    const pend = line.pendingIncoming != null ? Number(line.pendingIncoming) : 0;
+                    const sEff = line.stockEfectivo != null ? Number(line.stockEfectivo) : Number(line.stock || 0) + pend;
                     const ua = line.usoAjustado != null ? Number(line.usoAjustado).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
-                    grid.innerHTML = `<span>Stock: ${line.stock} ${u}</span><span>Uso: ${line.uso} ${u}</span>
+                    grid.innerHTML = `<span>Stock: ${line.stock} ${u}</span><span>Pendiente: ${pend} ${u}</span>
+                        <span>Stock efect.: ${sEff.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u}</span><span>Uso total: ${line.uso} ${u}</span>
                         <span>Ajuste: ${line.pctAdj}%</span><span>Uso aj.: ${ua} ${u}</span>`;
+                    if (line.usoByDays && Array.isArray(line.usoDays) && line.usoDays.length) {
+                        const des = document.createElement('div');
+                        des.className = 'col-span-2 text-gray-500 mt-1';
+                        des.textContent = `Por día: ${line.usoDays.map((v, i) => `D${i + 1} ${v}`).join(', ')}`;
+                        grid.appendChild(des);
+                    } else if (line.usoDesgloseText) {
+                        const des = document.createElement('div');
+                        des.className = 'col-span-2 text-gray-500 mt-1';
+                        des.textContent = line.usoDesgloseText;
+                        grid.appendChild(des);
+                    }
                     const ped = document.createElement('div');
                     ped.className = 'mt-2 text-amber-200 font-medium';
                     const up = line.unidadesPedido != null ? Number(line.unidadesPedido).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
@@ -1816,11 +2025,23 @@
                 }
                 doc.setFontSize(11);
                 const body = entry.items.map((line) => {
-                    const u = line.unitLabel || 'und';
+                    const pend = line.pendingIncoming != null ? Number(line.pendingIncoming) : 0;
+                    const se = line.stockEfectivo != null
+                        ? Number(line.stockEfectivo)
+                        : Number(line.stock || 0) + pend;
+                    let diasCol = '—';
+                    if (line.usoByDays && Array.isArray(line.usoDays) && line.usoDays.length) {
+                        diasCol = line.usoDays.map((v, i) => `D${i + 1}:${v}`).join(' ');
+                    } else if (line.usoDesgloseText) {
+                        diasCol = line.usoDesgloseText;
+                    }
                     return [
                         line.name,
                         String(line.stock),
+                        String(pend),
+                        se.toLocaleString('es-AR', { maximumFractionDigits: 2 }),
                         String(line.uso),
+                        diasCol,
                         `${line.pctAdj}%`,
                         line.usoAjustado?.toLocaleString?.('es-AR') ?? String(line.usoAjustado),
                         line.aPedir?.toLocaleString?.('es-AR') ?? String(line.aPedir),
@@ -1830,10 +2051,10 @@
                     ];
                 });
                 doc.autoTable({
-                    head: [['Ítem', 'Stock', 'Uso', '%', 'Uso aj.', 'Falta', 'Cajones', 'Bolsas', 'Und. pedido']],
+                    head: [['Ítem', 'Stock', 'Pend.', 'St.ef.', 'Uso', 'Días', '%', 'Uso aj.', 'Falta', 'Caj.', 'Bols.', 'Und.']],
                     body,
                     startY: y,
-                    styles: { fontSize: 8 },
+                    styles: { fontSize: 7 },
                     headStyles: { fillColor: [55, 65, 81] }
                 });
                 const stamp = entry.orderForDate || (entry.date && entry.date.slice(0, 10)) || String(entry.id || Date.now());
@@ -3452,7 +3673,14 @@
                     halfCarton: false,
                     unitLabel: 'und'
                 });
-                plantaFormValues[newId] = { stock: '', uso: '', pct: '0' };
+                plantaFormValues[newId] = {
+                    stock: '',
+                    pendingIncoming: '',
+                    uso: '',
+                    pct: '0',
+                    usoByDays: false,
+                    usoDays: ['']
+                };
                 renderPlantaConfigTable();
             });
             el.plantaConfigSaveBtn.addEventListener('click', () => savePlantaConfigFromUi());
