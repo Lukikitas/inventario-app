@@ -539,7 +539,10 @@
                     </div>
                 </div>
                 <div id="planta-items-container" class="flex-grow overflow-y-auto space-y-3 min-h-0 pr-1"></div>
-                <button type="button" id="planta-save-order-btn" class="mt-4 shrink-0 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar pedido</button>
+                <div class="mt-4 shrink-0 flex flex-col sm:flex-row gap-2">
+                    <button type="button" id="planta-pdf-bolsas-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">PDF bolsas (pedido)</button>
+                    <button type="button" id="planta-save-order-btn" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar pedido</button>
+                </div>
             </div>
 
             <div id="planta-config-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0 bg-gray-800 p-4">
@@ -719,6 +722,7 @@
                 plantaOrderNotes: document.getElementById('planta-order-notes'),
                 plantaItemsContainer: document.getElementById('planta-items-container'),
                 plantaSaveOrderBtn: document.getElementById('planta-save-order-btn'),
+                plantaPdfBolsasBtn: document.getElementById('planta-pdf-bolsas-btn'),
                 plantaConfigView: document.getElementById('planta-config-view'),
                 plantaConfigBackBtn: document.getElementById('planta-config-back-btn'),
                 plantaConfigTbody: document.getElementById('planta-config-tbody'),
@@ -1395,9 +1399,21 @@
                 return plantaParseNum(fv.uso);
             }
 
-            function getPlantaStockEfectivo(fv) {
-                if (!fv) return 0;
-                return plantaParseNum(fv.stock) + plantaParseNum(fv.pendingIncoming);
+            function getPlantaPendingUnits(fv, itemDef) {
+                if (!fv || !itemDef) return 0;
+                const raw = plantaParseNum(fv.pendingIncoming);
+                const mode = fv.pendingUnitMode || 'units';
+                const unitsPerBag = Math.max(0.0001, Number(itemDef.unitsPerBag) || 1);
+                const bagsPerCarton = Math.max(1, Number(itemDef.bagsPerCarton) || 1);
+                if (mode === 'bags') return raw * unitsPerBag;
+                if (mode === 'cartons') return raw * unitsPerBag * bagsPerCarton;
+                return raw;
+            }
+
+            function getPlantaStockEfectivo(fv, itemDef) {
+                if (!fv) return plantaParseNum(fv.stock);
+                const pend = itemDef ? getPlantaPendingUnits(fv, itemDef) : plantaParseNum(fv.pendingIncoming);
+                return plantaParseNum(fv.stock) + pend;
             }
 
             function computePlantaLine(itemDef, stockEfectivoNum, usoNum, pctNum) {
@@ -1418,6 +1434,7 @@
                 }
                 const bolsasOrden = cajonesOrden * bagsPerCarton;
                 const unidadesOrden = bolsasOrden * unitsPerBag;
+                const diffVsIdealUnd = unidadesOrden - aPedir;
                 return {
                     usoAdj,
                     aPedir,
@@ -1426,6 +1443,7 @@
                     cajonesOrden,
                     bolsasOrden,
                     unidadesOrden,
+                    diffVsIdealUnd,
                     unitsPerBag,
                     bagsPerCarton
                 };
@@ -1458,6 +1476,7 @@
                         plantaFormValues[it.id] = {
                             stock: '',
                             pendingIncoming: '',
+                            pendingUnitMode: 'units',
                             uso: '',
                             pct: '0',
                             usoByDays: false,
@@ -1466,6 +1485,9 @@
                     } else {
                         const v = plantaFormValues[it.id];
                         if (v.pendingIncoming === undefined) v.pendingIncoming = '';
+                        if (!v.pendingUnitMode || !['units', 'bags', 'cartons'].includes(v.pendingUnitMode)) {
+                            v.pendingUnitMode = 'units';
+                        }
                         if (typeof v.usoByDays !== 'boolean') v.usoByDays = false;
                         if (!Array.isArray(v.usoDays) || v.usoDays.length === 0) v.usoDays = [''];
                     }
@@ -1478,8 +1500,15 @@
                 if (ctx) {
                     const pe = document.createElement('p');
                     pe.className = 'text-xs text-gray-500 mb-1';
-                    pe.textContent = `Stock para el cálculo: ${ctx.stockEfectivo.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab} (${ctx.stockFisico.toLocaleString('es-AR', { maximumFractionDigits: 2 })} en planta + ${ctx.pending.toLocaleString('es-AR', { maximumFractionDigits: 2 })} pendiente)`;
+                    const pu = ctx.pendingUnits != null ? ctx.pendingUnits : ctx.pending;
+                    pe.textContent = `Stock para el cálculo: ${ctx.stockEfectivo.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab} (${ctx.stockFisico.toLocaleString('es-AR', { maximumFractionDigits: 2 })} en planta + ${pu.toLocaleString('es-AR', { maximumFractionDigits: 2 })} pendiente)`;
                     parent.appendChild(pe);
+                    if (ctx.pendingHint) {
+                        const ph = document.createElement('p');
+                        ph.className = 'text-xs text-gray-500 mb-1';
+                        ph.textContent = ctx.pendingHint;
+                        parent.appendChild(ph);
+                    }
                     if (ctx.usoByDays && ctx.usoDaysList && ctx.usoDaysList.length) {
                         const pu = document.createElement('p');
                         pu.className = 'text-xs text-gray-500 mb-1';
@@ -1504,6 +1533,19 @@
                 p3.className = 'font-medium text-amber-200';
                 p3.textContent = `Pedido: ${calc.unidadesOrden.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab} · ${calc.bolsasOrden.toLocaleString('es-AR', { maximumFractionDigits: 2 })} bolsas · ${formatPlantaCartons(calc.cajonesOrden)} cajón(es)`;
                 parent.append(p1, p2, p3);
+                const dIdeal = calc.diffVsIdealUnd != null ? calc.diffVsIdealUnd : 0;
+                if (calc.aPedir > 1e-9 || calc.unidadesOrden > 1e-9) {
+                    const p4 = document.createElement('p');
+                    p4.className = 'text-xs text-cyan-300 mt-1';
+                    if (Math.abs(dIdeal) < 1e-6) {
+                        p4.textContent = `Diferencia vs. pedido ideal: 0 ${uLab} (coincide con el faltante exacto).`;
+                    } else if (dIdeal > 0) {
+                        p4.textContent = `Diferencia vs. pedido ideal: +${dIdeal.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab} (pedís de más por múltiplos de bolsa/cajón).`;
+                    } else {
+                        p4.textContent = `Diferencia vs. pedido ideal: ${dIdeal.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}.`;
+                    }
+                    parent.appendChild(p4);
+                }
             }
 
             function renderPlantaView() {
@@ -1527,15 +1569,27 @@
                 state.plantaConfig.items.forEach((itemDef) => {
                     const fv = plantaFormValues[itemDef.id];
                     const stockFisico = plantaParseNum(fv.stock);
-                    const pending = plantaParseNum(fv.pendingIncoming);
-                    const stockEfectivo = getPlantaStockEfectivo(fv);
+                    const pendingUnits = getPlantaPendingUnits(fv, itemDef);
+                    const stockEfectivo = getPlantaStockEfectivo(fv, itemDef);
                     const usoNum = getPlantaUsoTotal(fv);
                     const pctNum = plantaParseNum(fv.pct);
                     const uLab = itemDef.unitLabel || 'und';
                     const calc = computePlantaLine(itemDef, stockEfectivo, usoNum, pctNum);
+                    let pendingHint = '';
+                    const rawPend = plantaParseNum(fv.pendingIncoming);
+                    if (rawPend > 0) {
+                        const m = fv.pendingUnitMode || 'units';
+                        if (m === 'bags') {
+                            pendingHint = `Ingresado: ${rawPend.toLocaleString('es-AR', { maximumFractionDigits: 2 })} bolsa(s) → ${pendingUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                        } else if (m === 'cartons') {
+                            pendingHint = `Ingresado: ${formatPlantaCartons(rawPend)} cajón(es) → ${pendingUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                        }
+                    }
                     const ctx = {
                         stockFisico,
-                        pending,
+                        pending: pendingUnits,
+                        pendingUnits,
+                        pendingHint,
                         stockEfectivo,
                         usoTotal: usoNum,
                         usoByDays: !!fv.usoByDays,
@@ -1585,9 +1639,41 @@
                         return wrap;
                     }
 
+                    const pendCol = document.createElement('div');
+                    const labP = document.createElement('span');
+                    labP.className = 'block text-xs text-gray-400 mb-1';
+                    labP.textContent = 'Pendiente de entrar';
+                    const rowP = document.createElement('div');
+                    rowP.className = 'flex gap-2 items-stretch';
+                    const selP = document.createElement('select');
+                    selP.className = 'flex-1 min-w-[96px] bg-gray-700 text-white p-2 rounded border border-gray-600 text-sm min-h-[44px]';
+                    [['units', `Und. (${uLab})`], ['bags', 'Bolsas'], ['cartons', 'Cajones']].forEach(([val, lab]) => {
+                        const o = document.createElement('option');
+                        o.value = val;
+                        o.textContent = lab;
+                        selP.appendChild(o);
+                    });
+                    selP.value = fv.pendingUnitMode || 'units';
+                    selP.addEventListener('change', () => {
+                        plantaFormValues[itemDef.id].pendingUnitMode = selP.value;
+                        renderPlantaView();
+                    });
+                    const inpP = document.createElement('input');
+                    inpP.type = 'number';
+                    inpP.className = 'flex-1 min-w-0 bg-gray-700 text-white p-2 rounded border border-gray-600 min-h-[44px]';
+                    inpP.dataset.plantaField = 'pendingIncoming';
+                    inpP.dataset.plantaId = itemDef.id;
+                    inpP.setAttribute('inputmode', 'decimal');
+                    inpP.step = 'any';
+                    inpP.min = '0';
+                    inpP.value = fv.pendingIncoming === '' ? '' : String(fv.pendingIncoming);
+                    inpP.addEventListener('input', onPlantaFieldInput);
+                    rowP.append(selP, inpP);
+                    pendCol.append(labP, rowP);
+
                     grid.append(
                         labeledInput(`Stock (${uLab})`, 'stock'),
-                        labeledInput(`Pendiente de entrar (${uLab})`, 'pendingIncoming'),
+                        pendCol,
                         labeledInput('Ajuste %', 'pct', 'number', { min: false })
                     );
 
@@ -1704,6 +1790,7 @@
                     plantaFormValues[id] = {
                         stock: '',
                         pendingIncoming: '',
+                        pendingUnitMode: 'units',
                         uso: '',
                         pct: '0',
                         usoByDays: false,
@@ -1722,15 +1809,27 @@
                 const itemDef = state.plantaConfig.items.find((x) => x.id === id);
                 if (!itemDef) return;
                 const stockFisico = plantaParseNum(fv.stock);
-                const pending = plantaParseNum(fv.pendingIncoming);
-                const stockEfectivo = getPlantaStockEfectivo(fv);
+                const pendingUnits = getPlantaPendingUnits(fv, itemDef);
+                const stockEfectivo = getPlantaStockEfectivo(fv, itemDef);
                 const usoNum = getPlantaUsoTotal(fv);
                 const pctNum = plantaParseNum(fv.pct);
                 const calc = computePlantaLine(itemDef, stockEfectivo, usoNum, pctNum);
                 const uLab = itemDef.unitLabel || 'und';
+                let pendingHint = '';
+                const rawPend = plantaParseNum(fv.pendingIncoming);
+                if (rawPend > 0) {
+                    const m = fv.pendingUnitMode || 'units';
+                    if (m === 'bags') {
+                        pendingHint = `Ingresado: ${rawPend.toLocaleString('es-AR', { maximumFractionDigits: 2 })} bolsa(s) → ${pendingUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                    } else if (m === 'cartons') {
+                        pendingHint = `Ingresado: ${formatPlantaCartons(rawPend)} cajón(es) → ${pendingUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${uLab}`;
+                    }
+                }
                 const ctx = {
                     stockFisico,
-                    pending,
+                    pending: pendingUnits,
+                    pendingUnits,
+                    pendingHint,
                     stockEfectivo,
                     usoTotal: usoNum,
                     usoByDays: !!fv.usoByDays,
@@ -1766,8 +1865,10 @@
                 state.plantaConfig.items.forEach((itemDef) => {
                     const fv = plantaFormValues[itemDef.id];
                     const stockFisico = plantaParseNum(fv.stock);
-                    const pending = plantaParseNum(fv.pendingIncoming);
-                    const stockEfectivo = getPlantaStockEfectivo(fv);
+                    const pendingEntryRaw = plantaParseNum(fv.pendingIncoming);
+                    const pendingEntryMode = fv.pendingUnitMode || 'units';
+                    const pendingIncomingUnits = getPlantaPendingUnits(fv, itemDef);
+                    const stockEfectivo = getPlantaStockEfectivo(fv, itemDef);
                     const usoNum = getPlantaUsoTotal(fv);
                     const pctNum = plantaParseNum(fv.pct);
                     const calc = computePlantaLine(itemDef, stockEfectivo, usoNum, pctNum);
@@ -1783,7 +1884,10 @@
                         name: itemDef.name,
                         unitLabel: uLab,
                         stock: stockFisico,
-                        pendingIncoming: pending,
+                        pendingIncoming: pendingIncomingUnits,
+                        pendingEntryRaw,
+                        pendingEntryMode,
+                        pendingIncomingUnits,
                         stockEfectivo,
                         uso: usoNum,
                         usoByDays: !!fv.usoByDays,
@@ -1792,6 +1896,7 @@
                         pctAdj: pctNum,
                         usoAjustado: calc.usoAdj,
                         aPedir: calc.aPedir,
+                        diffVsIdealUnd: calc.diffVsIdealUnd,
                         cajonesPedido: calc.cajonesOrden,
                         bolsasPedido: calc.bolsasOrden,
                         unidadesPedido: calc.unidadesOrden,
@@ -1980,10 +2085,18 @@
                     title.textContent = line.name || '';
                     const grid = document.createElement('div');
                     grid.className = 'grid grid-cols-2 gap-1 text-xs text-gray-400';
-                    const pend = line.pendingIncoming != null ? Number(line.pendingIncoming) : 0;
-                    const sEff = line.stockEfectivo != null ? Number(line.stockEfectivo) : Number(line.stock || 0) + pend;
+                    const pUnits = line.pendingIncomingUnits != null ? Number(line.pendingIncomingUnits) : Number(line.pendingIncoming || 0);
+                    const modeP = line.pendingEntryMode || 'units';
+                    const rawP = line.pendingEntryRaw;
+                    let pendText = `${pUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u}`;
+                    if ((modeP === 'bags' || modeP === 'cartons') && rawP != null && !Number.isNaN(Number(rawP)) && Number(rawP) !== 0) {
+                        pendText = modeP === 'bags'
+                            ? `${Number(rawP).toLocaleString('es-AR', { maximumFractionDigits: 2 })} bolsa(s) (= ${pUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u})`
+                            : `${formatPlantaCartons(Number(rawP))} cajón(es) (= ${pUnits.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u})`;
+                    }
+                    const sEff = line.stockEfectivo != null ? Number(line.stockEfectivo) : Number(line.stock || 0) + pUnits;
                     const ua = line.usoAjustado != null ? Number(line.usoAjustado).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
-                    grid.innerHTML = `<span>Stock: ${line.stock} ${u}</span><span>Pendiente: ${pend} ${u}</span>
+                    grid.innerHTML = `<span>Stock: ${line.stock} ${u}</span><span>Pendiente: ${pendText}</span>
                         <span>Stock efect.: ${sEff.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u}</span><span>Uso total: ${line.uso} ${u}</span>
                         <span>Ajuste: ${line.pctAdj}%</span><span>Uso aj.: ${ua} ${u}</span>`;
                     if (line.usoByDays && Array.isArray(line.usoDays) && line.usoDays.length) {
@@ -2003,6 +2116,19 @@
                     const bp = line.bolsasPedido != null ? Number(line.bolsasPedido).toLocaleString('es-AR', { maximumFractionDigits: 2 }) : '';
                     ped.textContent = `Pedido: ${up} ${u} · ${bp} bolsas · ${formatPlantaCartons(line.cajonesPedido)} cajón(es)`;
                     box.append(title, grid, ped);
+                    if (line.diffVsIdealUnd != null && (Number(line.aPedir) > 1e-9 || Number(line.unidadesPedido) > 1e-9)) {
+                        const di = Number(line.diffVsIdealUnd);
+                        const pDiff = document.createElement('p');
+                        pDiff.className = 'text-xs text-cyan-300 mt-1';
+                        if (Math.abs(di) < 1e-6) {
+                            pDiff.textContent = 'Diferencia vs. pedido ideal: 0 unidades.';
+                        } else if (di > 0) {
+                            pDiff.textContent = `Diferencia vs. pedido ideal: +${di.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u} (más por empaque).`;
+                        } else {
+                            pDiff.textContent = `Diferencia vs. pedido ideal: ${di.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${u}.`;
+                        }
+                        box.appendChild(pDiff);
+                    }
                     el.plantaDetailContent.appendChild(box);
                 });
             }
@@ -2025,7 +2151,7 @@
                 }
                 doc.setFontSize(11);
                 const body = entry.items.map((line) => {
-                    const pend = line.pendingIncoming != null ? Number(line.pendingIncoming) : 0;
+                    const pend = line.pendingIncomingUnits != null ? Number(line.pendingIncomingUnits) : Number(line.pendingIncoming || 0);
                     const se = line.stockEfectivo != null
                         ? Number(line.stockEfectivo)
                         : Number(line.stock || 0) + pend;
@@ -2059,6 +2185,34 @@
                 });
                 const stamp = entry.orderForDate || (entry.date && entry.date.slice(0, 10)) || String(entry.id || Date.now());
                 doc.save(`planta_pedido_${stamp}.pdf`);
+            }
+
+            function exportPlantaBolsasPdf() {
+                if (!state.plantaConfig || !state.plantaConfig.items.length) {
+                    alert('No hay ítems cargados.');
+                    return;
+                }
+                ensurePlantaFormShape();
+                const lines = collectPlantaOrderLines();
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const dateStr = el.plantaOrderDate.value || '';
+                doc.setFontSize(14);
+                doc.text(`Pedido Planta — bolsas a pedir`, 14, 16);
+                doc.setFontSize(11);
+                doc.text(`Fecha: ${dateStr || '—'}`, 14, 24);
+                const body = lines.map((l) => [
+                    l.name,
+                    Number(l.bolsasPedido || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })
+                ]);
+                doc.autoTable({
+                    head: [['Ítem', 'Bolsas a pedir']],
+                    body,
+                    startY: 30,
+                    styles: { fontSize: 11 },
+                    headStyles: { fillColor: [55, 65, 81] }
+                });
+                doc.save(`planta_bolsas_${dateStr || Date.now()}.pdf`);
             }
 
             async function savePlantaOrderToFirestore() {
@@ -3676,6 +3830,7 @@
                 plantaFormValues[newId] = {
                     stock: '',
                     pendingIncoming: '',
+                    pendingUnitMode: 'units',
                     uso: '',
                     pct: '0',
                     usoByDays: false,
@@ -3685,6 +3840,7 @@
             });
             el.plantaConfigSaveBtn.addEventListener('click', () => savePlantaConfigFromUi());
             el.plantaSaveOrderBtn.addEventListener('click', () => savePlantaOrderToFirestore());
+            el.plantaPdfBolsasBtn.addEventListener('click', () => exportPlantaBolsasPdf());
             el.plantaDetailPdfBtn.addEventListener('click', () => {
                 if (plantaHistoryDetailEntry) exportPlantaOrderPdf(plantaHistoryDetailEntry);
             });
