@@ -61,7 +61,7 @@
                     </div>
                     <p id="last-order-hint" class="text-xs text-gray-400 text-center mt-2 px-4 w-full"></p>
 
-                    <div class="mt-6 p-4 border-t border-gray-700 space-y-3">
+                    <div id="sir-menu-section" class="mt-6 p-4 border-t border-gray-700 space-y-3">
                         <h3 class="text-lg font-semibold text-gray-300">Obtener Datos de SIR</h3>
                         <div class="space-y-2">
                             <input type="text" id="sir-user-input" placeholder="Usuario SIR" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600 focus:border-indigo-500">
@@ -92,7 +92,7 @@
                             <label for="usage-excel-upload" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer text-sm">
                                 Cargar Archivo
                             </label>
-                            <input type="file" id="usage-excel-upload" class="hidden" accept=".xlsx, .xlsm, .xls">
+                            <input type="file" id="usage-excel-upload" class="hidden" accept=".xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
                             <button id="excel-config-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm">Opciones</button>
                         </div>
                         <div class="flex items-center justify-center">
@@ -635,6 +635,36 @@
         const db = getFirestore(app);
         const functions = getFunctions(app, 'southamerica-west1');
 
+        /** Si SIR deja de funcionar (sitio, CAPTCHA, etc.), poné false y redeploy solo hosting para ocultar el bloque del menú. */
+        const ENABLE_SIR_IN_MENU = true;
+
+        function findExcelColumnKey(jsonRow, configHeaderName) {
+            if (!jsonRow || typeof jsonRow !== 'object' || !configHeaderName) return null;
+            const want = String(configHeaderName).trim();
+            if (Object.prototype.hasOwnProperty.call(jsonRow, want)) return want;
+            const wantLower = want.toLowerCase();
+            for (const k of Object.keys(jsonRow)) {
+                if (String(k).trim().toLowerCase() === wantLower) return k;
+            }
+            return null;
+        }
+
+        function parseExcelUsageNumber(val) {
+            if (val === null || val === undefined || val === '') return NaN;
+            if (typeof val === 'number' && !Number.isNaN(val)) return val;
+            const s = String(val).trim();
+            if (!s) return NaN;
+            let n = parseFloat(s.replace(/\s/g, '').replace(',', '.'));
+            if (!Number.isNaN(n)) return n;
+            if (s.includes(',')) {
+                n = parseFloat(s.replace(/\./g, '').replace(',', '.'));
+                if (!Number.isNaN(n)) return n;
+            }
+            const cleaned = s.replace(/[^\d.,-]/g, '');
+            n = parseFloat(cleaned.replace(/\./g, '').replace(',', '.'));
+            return n;
+        }
+
         const initialItemsList = ["ACEITE FRITURA", "ALMIBAR PARA FACTURA X 7 KG", "AZUCAR INDIVIDUAL KFC", "BANDEJA CANOA KFC", "BOLSA DE LLEVAR GRANDE KFC2", "BOLSA DE RESIDUOS CHICA", "BOLSA DE RESIDUOS NEGRA X 250 UND", "BOLSA DE RESIDUOS TRANSPARENTE", "BOLSA PARA MARINADO K EN ROLLOS", "BOLSA SIN MANIJA GRANDE KFC X 250 UND", "BUCKET 130OZ KFC X 300UN", "BUCKET 50OZ X 420 UND", "BUCKET 85OZ X 330 UND", "CAFE EN POLVO", "CAJA BIG BOXKFC", "CAJA SNACK CON TAPA KFC X 800 UND", "CANDADITOS KFC", "CHOCOLATE CON MANI X 4.32KG", "CHOCOLATE EN POLVO X 4KG", "CINTA DE SEGURIDAD KFC X 36 UND", "COFIA DE FISELINA DESCARTABLE", "CONO HELADO", "CUCHARITA PARA HELADO X 1000 UND", "CUCHILLO", "EDULCORANTE INDIVIDUAL KFC", "ESTUCHE PAPA CHICA KFC X 800 UND", "ESTUCHE PAPAS GRANDES KFC", "ESTUCHE PAPAS MEDIANAS KFC", "ESTUCHE POPCORN GRANDE", "ESTUCHE POPCORN MEDIANO", "ETC TEMPERO", "FILTRO FREIDORAS FRYMASTER", "FILTRO FREIDORAS HENNY PENNY", "GALLETITA OREO CAJA X36 X 117 GR", "GUANTES VINILO M", "HARINA X 11.389KG", "JUGO DE LIMON INDIVIDUAL", "KETCHUP INDIVIDUAL", "LAMINA ANTIGRASA SANDWICH KFC X1500", "LECHE EN POLVO CAJAX10KG", "MANTECOL", "MANTELITO KFC", "MAYONESA INDIVIDUAL", "MEZCLA HUEVO/LECHE", "MOSTAZA CON MIEL", "MOSTAZA CON MIEL INDIVIDUAL", "MOSTAZA INDIVIDUAL", "PAÑO BLANCO X 300 UN", "PAÑO AZUL", "PAÑO ROJO", "PAPEL ANTIGRASA BLANCO", "PAPEL ANTIGRASA GENERICO CAJA X 4000", "PAPEL ANTIGRASA SANDWICH KFC 2", "PAPEL DE MANOS (TO)", "PAPEL FILM (ROLLO)", "PAPEL HIGIENICO", "PAPEL SILICONADO X 500 UND", "PORTAVASOS KFC X 200 UND", "REVOLVEDOR CAFE MADERA", "ROLLO IMPRESORA FISCAL GENERICO 2", "SAL A GRANEL", "SAL SOBRE INDIVIDUAL KFC", "SALSA BARBACOA A GRANEL", "SALSA BARBACOA INDIVIDUAL", "SALSA PICANTE A GRANEL", "SALSA PICANTE INDIVIDUAL", "SEASONING OR", "SERVILLETAS 30X30 X 5000 UND", "SERVILletas PARA CONO", "SOBRE KFC X 1000 UND", "STICKER REDONDO AMARILLO", "STICKER REDONDO AZUL", "STICKER REDONDO NARANJA", "STICKER REDONDO NEGRO", "STICKER REDONDO ROJO", "STICKER REDONDO VERDE", "STICKER VENCIMIENTO", "SUNDAE KFC 7.25 OZ X 2000 UND", "TAPA BUCKET KFC X 2150 UND", "TAPA CAJA BIG BOX", "TAPA DIPPER", "TAPA VASO CAFE 8 Y 12 OZ X 2000 UND", "TAPA VASO GASEOSA 16OZ", "TAPA VASO GASEOSA 12OZ", "TE INTIZEN ILUMINE (ROJO)", "TENEDOR", "QUESO CHEDDAR EN POLVO", "VASO AVALANCHA KFC X 1200 UND", "VASO CAFE 8 OZ KFC", "VASO CORTESIA KFC", "VASO GASEOSA 12OZ KFC A", "VASO GASEOSA 16OZ KFC A", "VASO GASEOSA 21OZ KFC", "VASO CAFE 12 OZ KFC X 1000", "HELADO DULCE DE LECHE", "HELADO VAINILLA", "JARABE DE FRUTILLA", "SALSA DE CHOCOLATE", "SALSA DE DULCE DE LECHE X 5KG", "QUESO CHEDDAR EN FETAS 2", "LOMITO EN FETAS", "PANCETA KFC", "MANTECA X 6KG", "MAYONESA A GRANEL", "MIXDE ENSALADA", "TOMATE", "PAN PORTENO", "PANAL MEMBRILLO X 72 UND", "REJILLA PASTELERA X 72 UND", "MEDIALUNA DE GRASA X 240 UND", "MEDIALUNA DE MANTECA X 180 UND", "HELADO CONG SUNDAE CHOC", "HELADO CONGELADO SUNDAE DDL", "HELADO CONGELADO AVALANCHA KFC", "PAPAS FRITAS KFC C7 X 18 KG", "AROS DE CEBOLLA X 10KG"];
 
         let state = {
@@ -678,6 +708,11 @@
         let plantaHistoryDetailEntry = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            const sirMenuSection = document.getElementById('sir-menu-section');
+            if (!ENABLE_SIR_IN_MENU && sirMenuSection) {
+                sirMenuSection.classList.add('hidden');
+            }
+
             const allViews = document.querySelectorAll('.view');
             const navButtons = document.getElementById('nav-buttons');
             const el = {
@@ -3653,7 +3688,9 @@
                     `;
                 } catch (error) {
                     console.error("Error calling cloud function:", error);
-                    outputDiv.textContent = `Error al llamar la función: ${error.message}`;
+                    const code = error.code ? ` [${error.code}]` : '';
+                    const details = error.details && typeof error.details === 'string' ? ` ${error.details}` : '';
+                    outputDiv.textContent = `Error al llamar la función:${code} ${error.message || error}${details}`;
                 }
             }
 
@@ -3713,13 +3750,17 @@
 
                 } catch (error) {
                     console.error("Error calling cloud function for report:", error);
-                    outputDiv.textContent = `Error al generar el reporte: ${error.message}`;
+                    const code = error.code ? ` [${error.code}]` : '';
+                    const details = error.details && typeof error.details === 'string' ? ` ${error.details}` : '';
+                    outputDiv.textContent = `Error al generar el reporte:${code} ${error.message || error}${details}`;
                 }
             }
 
             // --- Event Listeners ---
-            el.fetchSirDataBtn.addEventListener('click', handleSirLoginAndFetch);
-            el.fetchSirReportBtn.addEventListener('click', handleSirReportFetch);
+            if (ENABLE_SIR_IN_MENU) {
+                el.fetchSirDataBtn.addEventListener('click', handleSirLoginAndFetch);
+                el.fetchSirReportBtn.addEventListener('click', handleSirReportFetch);
+            }
             el.continueInventoryBtn.addEventListener('click', () => {
                 appMode = 'inventory';
                 const inv = state.currentInventory;
@@ -4559,40 +4600,64 @@
                 reader.onload = async (e) => {
                     try {
                         const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
+                        const workbook = XLSX.read(data, { type: 'array' });
 
-                        const sheetName = state.excelConfig.sheetName;
-                        if (!workbook.SheetNames.includes(sheetName)) {
-                            throw new Error(`No se encontró la hoja "${sheetName}" en el archivo.`);
+                        const sheetName = state.excelConfig.sheetName.trim();
+                        const sheetMatch = workbook.SheetNames.find(
+                            (n) => String(n).trim() === sheetName || String(n).trim().toLowerCase() === sheetName.toLowerCase()
+                        );
+                        if (!sheetMatch) {
+                            throw new Error(
+                                `No se encontró la hoja "${sheetName}". Hojas en el archivo: ${workbook.SheetNames.join(', ')}`
+                            );
                         }
-                        const worksheet = workbook.Sheets[sheetName];
+                        const worksheet = workbook.Sheets[sheetMatch];
                         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-                        const itemHeader = state.excelConfig.itemColumn;
-                        const usageHeader = state.excelConfig.usageColumn;
+                        if (!jsonData.length) {
+                            throw new Error(`La hoja "${sheetMatch}" no tiene filas de datos.`);
+                        }
 
-                        if (jsonData.length > 0 && (!jsonData[0].hasOwnProperty(itemHeader) || !jsonData[0].hasOwnProperty(usageHeader))) {
-                             throw new Error(`No se encontraron las columnas "${itemHeader}" y/o "${usageHeader}" en la hoja "${sheetName}". Revisa la configuración.`);
+                        const firstRow = jsonData[0];
+                        const itemKey = findExcelColumnKey(firstRow, state.excelConfig.itemColumn);
+                        const usageKey = findExcelColumnKey(firstRow, state.excelConfig.usageColumn);
+
+                        if (!itemKey || !usageKey) {
+                            const detected = Object.keys(firstRow)
+                                .map((k) => `"${String(k).trim()}"`)
+                                .slice(0, 30)
+                                .join(', ');
+                            throw new Error(
+                                `No se encontraron columnas para ítem o uso. Config: ítem="${state.excelConfig.itemColumn}", uso="${state.excelConfig.usageColumn}". ` +
+                                    `Columnas detectadas en la 1ª fila (ej.): ${detected || '(ninguna)'}`
+                            );
                         }
 
                         const newUsageData = {};
-                        jsonData.forEach(row => {
-                            const itemName = String(row[itemHeader]).trim().toUpperCase();
-                            const usageValue = parseFloat(row[usageHeader]);
-                            if (itemName && !isNaN(usageValue)) {
+                        jsonData.forEach((row) => {
+                            const rawItem = row[itemKey];
+                            const itemName = rawItem != null ? String(rawItem).trim().toUpperCase() : '';
+                            const usageValue = parseExcelUsageNumber(row[usageKey]);
+                            if (itemName && !Number.isNaN(usageValue)) {
                                 newUsageData[itemName] = usageValue;
                             }
                         });
 
+                        const count = Object.keys(newUsageData).length;
+                        if (count === 0) {
+                            throw new Error(
+                                'No se importó ningún ítem con uso numérico válido. Revisá nombres de columnas y formato de números (coma decimal, etc.).'
+                            );
+                        }
+
                         await setDoc(refs.itemUsageData(), newUsageData);
-                        showToast(`Datos de uso de ${file.name} cargados y sincronizados.`);
+                        showToast(`${count} ítems con uso cargados desde ${file.name}.`);
 
                     } catch (error) {
                         console.error("Error al procesar el archivo Excel:", error);
                         alert("Error al procesar el archivo: " + error.message);
                         el.usageExcelFilename.textContent = 'Error al cargar el archivo.';
                     } finally {
-                        // Reset file input so user can upload the same file again
                         event.target.value = '';
                     }
                 };
