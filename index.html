@@ -194,6 +194,10 @@
                 <p class="text-gray-400 mb-4">¿Para qué día es este pedido?</p>
                 <div class="w-full space-y-4">
                     <input type="date" id="order-for-date" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                    <select id="order-order-mode" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                        <option value="usual">Orden habitual (ubicaciones)</option>
+                        <option value="category">Agrupar por categoría</option>
+                    </select>
                 </div>
                 <div class="flex gap-2 mt-8 w-full">
                     <button id="back-to-select-inv-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">Atrás</button>
@@ -266,6 +270,7 @@
                     <div class="w-full px-4 shrink-0">
                         <p id="order-item-counter" class="text-sm font-medium text-blue-400 mb-2">Ítem 1/123</p>
                         <h1 id="order-item-name" class="text-2xl md:text-3xl font-bold mb-2 text-gray-100 break-words">Nombre del Ítem</h1>
+                        <p id="order-item-category" class="text-sm font-medium text-cyan-300 mb-2">Sin categoría</p>
                         <div id="order-item-usage-container" class="hidden text-center mb-4">
                             <p class="text-sm text-teal-400">Uso Promedio: <span id="order-item-usage" class="font-bold"></span></p>
                         </div>
@@ -332,6 +337,10 @@
                     <select id="inventory-time" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
                         <option>Apertura</option> <option>Intermedio</option> <option>Cierre</option>
                     </select>
+                    <select id="inventory-order-mode" class="w-full bg-gray-700 text-white p-3 rounded-lg border-2 border-gray-600">
+                        <option value="usual">Orden habitual (ubicaciones)</option>
+                        <option value="category">Agrupar por categoría</option>
+                    </select>
                 </div>
                 <button id="start-counting-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg">Comenzar</button>
             </div>
@@ -347,6 +356,7 @@
                     <div class="w-full px-4 shrink-0 mt-4">
                         <p id="item-counter" class="text-sm font-medium text-indigo-400 mb-2">Ítem 1/123</p>
                         <h1 id="item-name" class="text-2xl md:text-3xl font-bold mb-6 text-gray-100 break-words">Nombre del Ítem</h1>
+                        <p id="item-category" class="text-sm font-medium text-cyan-300 mb-6">Sin categoría</p>
                         <input type="number" step="0.01" id="item-quantity" placeholder="Ingresa la cantidad" class="w-full max-w-sm mx-auto bg-gray-700 text-white text-center text-2xl p-4 rounded-lg border-2 border-gray-600 min-h-[44px]">
                     </div>
                 </div>
@@ -746,6 +756,7 @@
             cachedAlreadyOrderedByItemName: null,
             inventoryLocations: [],
             itemLocationIds: {},
+            itemCategoryKeys: {},
             plantaConfig: null,
             plantaHistory: []
         };
@@ -831,9 +842,11 @@
                 plantaDetailPdfBtn: document.getElementById('planta-detail-pdf-btn'),
                 inventoryDate: document.getElementById('inventory-date'),
                 inventoryTime: document.getElementById('inventory-time'),
+                inventoryOrderMode: document.getElementById('inventory-order-mode'),
                 startCountingBtn: document.getElementById('start-counting-btn'),
                 itemCounter: document.getElementById('item-counter'),
                 itemName: document.getElementById('item-name'),
+                itemCategory: document.getElementById('item-category'),
                 itemQuantity: document.getElementById('item-quantity'),
                 naBtn: document.getElementById('na-btn'),
                 skipBtn: document.getElementById('skip-btn'),
@@ -880,10 +893,12 @@
                 selectInventoryList: document.getElementById('select-inventory-list'),
                 backToMenuFromSelectInvBtn: document.getElementById('back-to-menu-from-select-inv-btn'),
                 orderForDate: document.getElementById('order-for-date'),
+                orderOrderMode: document.getElementById('order-order-mode'),
                 backToSelectInvBtn: document.getElementById('back-to-select-inv-btn'),
                 startOrderingBtn: document.getElementById('start-ordering-btn'),
                 orderItemCounter: document.getElementById('order-item-counter'),
                 orderItemName: document.getElementById('order-item-name'),
+                orderItemCategory: document.getElementById('order-item-category'),
                 orderItemStock: document.getElementById('order-item-stock'),
                 orderItemQuantity: document.getElementById('order-item-quantity'),
                 orderItemAlreadyOrderedContainer: document.getElementById('order-item-already-ordered-container'),
@@ -993,6 +1008,56 @@
                 return String(name ?? '').trim().toUpperCase();
             }
 
+            const UNCATEGORIZED = 'Sin categoría';
+            const categorySource = {
+                ACEIT: ['ACEITE FRITURA'],
+                CAFES: ['ALMIBAR PARA FACTURA X 7 KG', 'CAFE EN POLVO', 'CHOCOLATE CON MANI X 4.32KG', 'CHOCOLATE EN POLVO X 4KG', 'MEDIALUNA DE GRASA X 240 UND', 'MEDIALUNA DE MANTECA X 180 UND', 'PANAL MEMBRILLO X 72 UND', 'REJILLA PASTELERA X 72 UND', 'TE INTIZEN ILUMINE (ROJO)'],
+                CARNI: ['LOMITO EN FETAS', 'PANCETA X 11.25 KG', 'PANCETA KFC'],
+                CONSU: ['AZUCAR INDIVIDUAL KFC', 'BOLSA DE LLEVAR GRANDE KFC2', 'CANDADITOS KFC', 'EDULCORANTE INDIVIDUAL KFC', 'JUGO DE LIMON INDIVIDUAL', 'KETCHUP INDIVIDUAL', 'MAYONESA INDIVIDUAL', 'MOSTAZA INDIVIDUAL', 'PORTAVASOS KFC X 200 UND', 'REVOLVEDOR CAFE MADERA', 'SAL SOBRE INDIVIDUAL KFC', 'SERVILLETAS PARA CONO', 'TENEDOR', 'TAPA VASO GASEOSA 16OZ', 'TAPA VASO GASEOSA 12OZ', 'VASO CORTESIA KFC'],
+                EMPAQ: ['BANDEJA CANOA KFC', 'BOLSA SIN MANIJA GRANDE KFC X 250 UND', 'BUCKET 50OZ X 420 UND', 'BUCKET 85OZ X 330 UND', 'CAJA BIG BOXKFC', 'CAJA SNACK CON TAPA KFC X 800 UND', 'CINTA DE SEGURIDAD KFC X 36 UND', 'CUCHARITA PARA HELADO X 1000 UND', 'ESTUCHE PAPA CHICA KFC X 800 UND', 'ESTUCHE PAPAS GRANDES KFC', 'ESTUCHE PAPAS MEDIANAS KFC', 'ESTUCHE POPCORN GRANDE', 'ESTUCHE POPCORN MEDIANO', 'LAMINA ANTIGRASA SANDWICH KFC X1500', 'MANTELITO KFC', 'PAPEL ANTIGRASA BLANCO', 'PAPEL ANTIGRASA SANDWICH KFC 2', 'SOBRE KFC X 1000 UND', 'SUNDAE KFC 7.25 OZ X 2000 UND', 'TAPA BUCKET KFC X 2150 UND', 'TAPA CAJA BIG BOX', 'TAPA VASO CAFE 8 Y 12 OZ X 2000 UND', 'VASO AVALANCHA KFC X 1200 UND', 'VASO CAFE 8 OZ KFC', 'VASO GASEOSA 12OZ KFC A', 'VASO GASEOSA 16OZ KFC A', 'VASO GASEOSA 21OZ KFC', 'VASO CAFE 12 OZ KFC X 1000'],
+                LACTE: ['LECHE EN POLVO CAJAX10KG', 'MANTECA X 6KG', 'QUESO CHEDDAR EN FETAS 2'],
+                LIMPI: ['BOLSA DE RESIDUOS NEGRA X 250 UND', 'GUANTE VINILLO M X 1000 UND', 'GUANTES VINILO M', 'PAÑO BLANCO X 300 UN', 'PAÑO AZUL', 'PAÑO ROJO', 'PAPEL DE MANOS X 2 UND', 'PAPEL DE MANOS (TO)', 'PAPEL HIGIENICO'],
+                MENAJ: ['FILTRO FREIDORAS HENNY PENNY'],
+                OTROS: ['ETC TEMPERO', 'SAL A GRANEL', 'SEASONING OR', 'SERVILLETAS 30X30 X 5000 UND'],
+                PAPAS: ['PAPAS FRITAS KFC C7 X 18 KG'],
+                POSTR: ['CONO HELADO', 'GALLETITA OREO CAJA X36 X 117 GR', 'HELADO DULCE DE LECHE', 'HELADO VAINILLA', 'MANTECOL', 'SALSA DE CHOCOLATE'],
+                SALSA: ['JARABE DE FRUTILLA', 'MAYONESA A GRANEL', 'MEZCLA HUEVO/LECHE', 'SALSA BARBACOA A GRANEL', 'SALSA BARBACOA INDIVIDUAL', 'SALSA DE DULCE DE LECHE X 5KG'],
+                SUMIN: ['PAPEL FILM X ROLLO', 'PAPEL FILM (ROLLO)'],
+                TRIGO: ['HARINA X 11.389KG', 'PAN PORTENO'],
+                VEGET: ['AROS DE CEBOLLA X 10KG', 'MIXDE ENSALADA', 'TOMATE X 17 KG', 'TOMATE']
+            };
+            const categoryByItemKey = new Map(Object.entries(categorySource).flatMap(([category, items]) =>
+                items.map(item => [normalizeCatalogKey(item), category])
+            ));
+            const categoryOptions = [UNCATEGORIZED, 'ACEIT', 'BEBID', 'BOTEL', 'CAFES', 'CARNI', 'CONSU', 'EMPAQ', 'LACTE', 'LIMPI', 'MENAJ', 'OTROS', 'PAPAS', 'POSTR', 'SALSA', 'SUMIN', 'TRIGO', 'VEGET'];
+
+            function itemCategory(name) {
+                return state.itemCategoryKeys[normalizeCatalogKey(name)] || categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED;
+            }
+
+            function completeItemCategories() {
+                let changed = false;
+                state.masterItems.forEach(name => {
+                    const key = normalizeCatalogKey(name);
+                    if (!state.itemCategoryKeys[key]) {
+                        state.itemCategoryKeys[key] = categoryByItemKey.get(key) || UNCATEGORIZED;
+                        changed = true;
+                    }
+                });
+                return changed;
+            }
+
+            function sortBySelectedOrder(items, orderMode) {
+                if (orderMode !== 'category') return items;
+                return [...items].map((item, index) => ({ item, index })).sort((a, b) => {
+                    const aCategory = itemCategory(a.item.name);
+                    const bCategory = itemCategory(b.item.name);
+                    if (aCategory === UNCATEGORIZED && bCategory !== UNCATEGORIZED) return 1;
+                    if (bCategory === UNCATEGORIZED && aCategory !== UNCATEGORIZED) return -1;
+                    return aCategory.localeCompare(bCategory, 'es') || a.index - b.index;
+                }).map(row => row.item);
+            }
+
             async function persistMasterItems() {
                 if (!userId) return;
                 await setDoc(refs.masterItems(), {
@@ -1001,7 +1066,8 @@
                     discontinuedItemKeys: state.discontinuedItemKeys,
                     lowFrequencyItemKeys: state.lowFrequencyItemKeys,
                     inventoryLocations: state.inventoryLocations,
-                    itemLocationIds: state.itemLocationIds
+                    itemLocationIds: state.itemLocationIds,
+                    itemCategoryKeys: state.itemCategoryKeys
                 });
             }
 
@@ -1049,7 +1115,7 @@
                 return 'loc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
             }
 
-            function orderedMasterNamesForWorkflow() {
+            function orderedMasterNamesForWorkflow(orderMode = 'usual') {
                 const validLocIds = new Set(state.inventoryLocations.map(l => l.id));
                 const buckets = new Map();
                 state.inventoryLocations.forEach(l => buckets.set(l.id, []));
@@ -1069,7 +1135,14 @@
                     ordered.push(...(buckets.get(loc.id) || []));
                 });
                 ordered.push(...noLoc);
-                return ordered;
+                if (orderMode !== 'category') return ordered;
+                return ordered.map((name, index) => ({ name, index })).sort((a, b) => {
+                    const aCategory = itemCategory(a.name);
+                    const bCategory = itemCategory(b.name);
+                    if (aCategory === UNCATEGORIZED && bCategory !== UNCATEGORIZED) return 1;
+                    if (bCategory === UNCATEGORIZED && aCategory !== UNCATEGORIZED) return -1;
+                    return aCategory.localeCompare(bCategory, 'es') || a.index - b.index;
+                }).map(row => row.name);
             }
 
             function refreshManageLocationFilterOptions() {
@@ -1335,6 +1408,11 @@
                                     Object.entries(rawLocMap).map(([k, v]) => [normalizeCatalogKey(k), String(v)])
                                   )
                                 : {};
+                            const rawCategoryMap = docSnap.data().itemCategoryKeys;
+                            state.itemCategoryKeys = rawCategoryMap && typeof rawCategoryMap === 'object' && !Array.isArray(rawCategoryMap)
+                                ? Object.fromEntries(Object.entries(rawCategoryMap).map(([k, v]) => [normalizeCatalogKey(k), String(v)]))
+                                : {};
+                            if (completeItemCategories()) persistMasterItems();
                         } else {
                             setDoc(refs.masterItems(), {
                                 items: initialItemsList,
@@ -1342,7 +1420,8 @@
                                 discontinuedItemKeys: [],
                                 lowFrequencyItemKeys: [],
                                 inventoryLocations: [],
-                                itemLocationIds: {}
+                                itemLocationIds: {},
+                                itemCategoryKeys: Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED]))
                             });
                             state.masterItems = initialItemsList;
                             state.alwaysNaItems = [];
@@ -1350,6 +1429,7 @@
                             state.lowFrequencyItemKeys = [];
                             state.inventoryLocations = [];
                             state.itemLocationIds = {};
+                            state.itemCategoryKeys = Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED]));
                         }
                     });
 
@@ -2348,6 +2428,7 @@
 
                 if (mode === 'order') {
                     el.orderItemName.textContent = item.name;
+                    el.orderItemCategory.textContent = item.category || itemCategory(item.name);
                     el.orderItemCounter.textContent = `Ítem ${positionInQueue + 1} de ${itemsToCountQueue.length}`;
                     el.orderItemStock.textContent = item.stock ?? 'N/A';
                     el.orderItemQuantity.value = (item.toOrder === null || item.toOrder === 'NO PEDIR') ? '' : item.toOrder;
@@ -2464,20 +2545,22 @@
                     }
 
                     el.itemName.textContent = item.name;
+                    el.itemCategory.textContent = item.category || itemCategory(item.name);
                     el.itemCounter.textContent = `Ítem ${positionInQueue + 1} de ${itemsToCountQueue.length}`;
                     el.itemQuantity.value = (item.quantity === null || item.quantity === 'N/A') ? '' : item.quantity;
                     el.itemQuantity.focus();
                 }
             }
 
-            function buildCatalogInventoryPayload() {
+            function buildCatalogInventoryPayload(orderMode = 'usual') {
                 const rows = [];
                 const metaLowFreqIndices = [];
-                orderedMasterNamesForWorkflow().forEach(name => {
+                orderedMasterNamesForWorkflow(orderMode).forEach(name => {
                     if (isCatalogDiscontinued(name)) return;
                     const idx = rows.length;
                     rows.push({
                         name,
+                        category: itemCategory(name),
                         quantity: itemIsAlwaysNa(name) ? 'N/A' : null
                     });
                     if (isCatalogLowFrequency(name)) metaLowFreqIndices.push(idx);
@@ -2485,13 +2568,13 @@
                 return { rows, metaLowFreqIndices };
             }
 
-            function buildCatalogOrderItemsFromBase(baseInv) {
+            function buildCatalogOrderItemsFromBase(baseInv, orderMode = 'usual') {
                 const items = [];
                 const metaLowFreqIndices = [];
                 const baseByKey = new Map(baseInv.items.map(line => [normalizeCatalogKey(line.name), line]));
                 const seen = new Set();
 
-                orderedMasterNamesForWorkflow().forEach(name => {
+                orderedMasterNamesForWorkflow(orderMode).forEach(name => {
                     const line = baseByKey.get(normalizeCatalogKey(name));
                     if (!line) return;
                     seen.add(normalizeCatalogKey(line.name));
@@ -2499,6 +2582,7 @@
                     const idx = items.length;
                     items.push({
                         name: line.name,
+                        category: itemCategory(line.name),
                         stock: line.quantity,
                         toOrder: itemIsAlwaysNa(line.name) ? 'NO PEDIR' : null,
                         received: null
@@ -2514,6 +2598,7 @@
                     const idx = items.length;
                     items.push({
                         name: line.name,
+                        category: itemCategory(line.name),
                         stock: line.quantity,
                         toOrder: itemIsAlwaysNa(line.name) ? 'NO PEDIR' : null,
                         received: null
@@ -2521,6 +2606,16 @@
                     if (isCatalogLowFrequency(line.name)) metaLowFreqIndices.push(idx);
                 });
 
+                if (orderMode === 'category') {
+                    items.sort((a, b) => {
+                        const aCategory = a.category || UNCATEGORIZED;
+                        const bCategory = b.category || UNCATEGORIZED;
+                        if (aCategory === UNCATEGORIZED && bCategory !== UNCATEGORIZED) return 1;
+                        if (bCategory === UNCATEGORIZED && aCategory !== UNCATEGORIZED) return -1;
+                        return aCategory.localeCompare(bCategory, 'es');
+                    });
+                    return { items, metaLowFreqIndices: items.map((item, index) => isCatalogLowFrequency(item.name) ? index : -1).filter(index => index >= 0) };
+                }
                 return { items, metaLowFreqIndices };
             }
 
@@ -3124,6 +3219,25 @@
                     });
                     locWrap.appendChild(locSel);
 
+                    const categoryWrap = document.createElement('label');
+                    categoryWrap.className = 'flex items-center gap-2 text-xs text-gray-300 shrink-0';
+                    categoryWrap.appendChild(document.createTextNode('Categoría '));
+                    const categorySel = document.createElement('select');
+                    categorySel.className = 'bg-gray-600 text-white text-xs rounded-md border border-gray-500 px-2 py-2 min-h-[44px] max-w-[10rem]';
+                    categoryOptions.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categorySel.appendChild(option);
+                    });
+                    categorySel.value = itemCategory(name);
+                    categorySel.addEventListener('change', async () => {
+                        state.itemCategoryKeys[normalizeCatalogKey(name)] = categorySel.value;
+                        await persistMasterItems();
+                        showToast('Categoría actualizada.');
+                    });
+                    categoryWrap.appendChild(categorySel);
+
                     const buttonsContainer = document.createElement('div');
                     buttonsContainer.className = 'flex gap-2 flex-shrink-0';
                     buttonsContainer.innerHTML = `<button type="button" data-index="${originalIndex}" class="edit-item-btn bg-yellow-600 px-3 py-2 rounded-lg text-xs min-h-[44px]">Editar</button>
@@ -3136,6 +3250,7 @@
                     listItem.appendChild(naLabel);
                     listItem.appendChild(freqWrap);
                     listItem.appendChild(locWrap);
+                    listItem.appendChild(categoryWrap);
                     listItem.appendChild(buttonsContainer);
                     el.manageItemsList.appendChild(listItem);
                 });
@@ -3175,6 +3290,10 @@
                             }
                             migrateFrequencyKeys(ko, kn);
                             migrateItemLocationKeys(ko, kn);
+                            if (state.itemCategoryKeys[ko] !== undefined) {
+                                state.itemCategoryKeys[kn] = state.itemCategoryKeys[ko];
+                                delete state.itemCategoryKeys[ko];
+                            }
                             state.masterItems[index] = newName;
                             await persistMasterItems();
                             showToast('Ítem renombrado.');
@@ -3192,6 +3311,7 @@
                             state.discontinuedItemKeys = state.discontinuedItemKeys.filter(x => x !== removedKey);
                             state.lowFrequencyItemKeys = state.lowFrequencyItemKeys.filter(x => x !== removedKey);
                             delete state.itemLocationIds[removedKey];
+                            delete state.itemCategoryKeys[removedKey];
                             state.masterItems.splice(index, 1);
                             await persistMasterItems();
                             showToast('Ítem eliminado.');
@@ -3638,6 +3758,8 @@
                     }
                 });
 
+                tempRemitoItems = sortBySelectedOrder(tempRemitoItems, el.orderOrderMode.value);
+
                 displayRemitoConfirmList();
                 switchView(el.remitoConfirmView);
             }
@@ -3972,12 +4094,14 @@
 
 
             el.startCountingBtn.addEventListener('click', async () => {
-                const { rows, metaLowFreqIndices } = buildCatalogInventoryPayload();
+                const orderMode = el.inventoryOrderMode.value;
+                const { rows, metaLowFreqIndices } = buildCatalogInventoryPayload(orderMode);
                 const newInventory = {
                     id: String(Date.now()),
                     type: 'inventory',
                     date: el.inventoryDate.value,
                     timeOfDay: el.inventoryTime.value,
+                    orderMode,
                     items: rows,
                     metaLowFreqIndices,
                     lowFreqPromptDone: false
@@ -4012,12 +4136,14 @@
                     alert('Error: No se encontró el inventario base.');
                     return;
                 }
-                const { items, metaLowFreqIndices } = buildCatalogOrderItemsFromBase(baseInv);
+                const orderMode = el.orderOrderMode.value;
+                const { items, metaLowFreqIndices } = buildCatalogOrderItemsFromBase(baseInv, orderMode);
                 state.currentOrder = {
                     id: String(Date.now()),
                     type: 'order',
                     date: new Date().toISOString(),
                     orderForDate: el.orderForDate.value,
+                    orderMode,
                     baseInventoryId: baseInv.id,
                     items,
                     metaLowFreqIndices,
@@ -4245,6 +4371,7 @@
                 const newName = el.newItemName.value.trim().toUpperCase();
                 if (newName && !state.masterItems.includes(newName)) {
                     state.masterItems.push(newName);
+                    state.itemCategoryKeys[normalizeCatalogKey(newName)] = categoryByItemKey.get(normalizeCatalogKey(newName)) || UNCATEGORIZED;
                     await persistMasterItems();
                     renderManageItemsList();
                     el.newItemName.value = '';
@@ -4462,11 +4589,13 @@
                     type: 'order',
                     date: new Date().toISOString(),
                     orderForDate: el.orderForDate.value,
+                    orderMode: el.orderOrderMode.value,
                     baseInventoryId: baseInv.id,
                     items: tempRemitoItems.map(remitoItem => {
                         const baseItem = baseInv.items.find(bi => bi.name === remitoItem.name);
                         return {
                             name: remitoItem.name,
+                            category: itemCategory(remitoItem.name),
                             stock: baseItem ? baseItem.quantity : 'N/A',
                             toOrder: remitoItem.quantity,
                             received: remitoItem.quantity
@@ -4492,7 +4621,7 @@
 
                 if (itemName && !isNaN(quantity) && quantity > 0) {
                     tempRemitoItems.push({ name: itemName, quantity: quantity });
-                    tempRemitoItems.sort((a,b) => a.name.localeCompare(b.name));
+                    tempRemitoItems = sortBySelectedOrder(tempRemitoItems, el.orderOrderMode.value);
                     displayRemitoConfirmList();
                     el.addRemitoItemSelect.value = '';
                     el.addRemitoItemQuantity.value = '';
