@@ -93,3 +93,14 @@ details > summary::-webkit-details-marker { display: none; }
 #manage-items-view details:not([open]) > summary::after {
     content: "▸";
 }
+
+/* La cabecera de gestión queda compacta: los paneles avanzados se despliegan sólo al necesitarlos. */
+#manage-items-view .manage-compact-header > summary {
+    line-height: 1.25;
+}
+
+@media (min-width: 1024px) {
+    #manage-items-view .manage-compact-header {
+        margin-bottom: 0.4rem;
+    }
+}

@@ -416,30 +416,30 @@
             </div>
 
             <div id="manage-items-view" class="view hidden absolute inset-0 flex flex-col h-full min-h-0">
-                 <div class="flex items-center justify-between mb-4 shrink-0">
+                 <div class="flex items-center justify-between mb-2 shrink-0 manage-compact-header">
                     <button id="back-to-menu-from-manage-btn" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">&larr;</button>
                     <h1 class="text-2xl font-bold text-center text-gray-100">Gestionar Ítems</h1>
                     <div class="w-8"></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3 shrink-0">
-                    <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="md:col-span-2 w-full bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2 shrink-0 manage-compact-header">
+                    <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="md:col-span-2 w-full bg-gray-700 px-2 py-1.5 rounded-lg border-2 border-gray-600 min-h-[38px]">
                     <div class="grid grid-cols-3 gap-2">
-                        <select id="manage-filter-class" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por clase">
+                        <select id="manage-filter-class" class="w-full bg-gray-700 text-white px-2 py-1.5 rounded-lg border-2 border-gray-600 min-h-[38px]" title="Filtrar por clase">
                             <option value="all">Clase: todas</option>
                             <option value="normal">Clase: normal</option>
                             <option value="low">Clase: poca freq.</option>
                             <option value="discontinued">Clase: desuso</option>
                         </select>
-                        <select id="manage-filter-location" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por ubicación">
+                        <select id="manage-filter-location" class="w-full bg-gray-700 text-white px-2 py-1.5 rounded-lg border-2 border-gray-600 min-h-[38px]" title="Filtrar por ubicación">
                             <option value="all">Ubic.: todas</option>
                             <option value="none">Ubic.: sin asignar</option>
                         </select>
-                        <select id="manage-filter-category" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por categoría">
+                        <select id="manage-filter-category" class="w-full bg-gray-700 text-white px-2 py-1.5 rounded-lg border-2 border-gray-600 min-h-[38px]" title="Filtrar por categoría">
                             <option value="all">Categoría: todas</option>
                         </select>
                     </div>
                 </div>
-                <details id="manage-bulk-bar" class="mb-2 shrink-0 p-3 bg-gray-900/80 rounded-lg border border-gray-600" open>
+                <details id="manage-bulk-bar" class="mb-2 shrink-0 px-3 py-2 bg-gray-900/80 rounded-lg border border-gray-600 manage-compact-header">
                     <summary class="cursor-pointer text-sm font-semibold text-gray-200">Edición masiva</summary>
                     <div class="flex flex-wrap gap-2 mt-2 items-end">
                         <button type="button" id="manage-select-visible-btn" class="bg-gray-600 hover:bg-gray-500 text-white text-sm font-bold px-3 py-2 rounded-lg min-h-[44px]">Seleccionar visibles</button>
@@ -469,7 +469,7 @@
                         <button type="button" id="bulk-apply-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg min-h-[44px] shrink-0">Aplicar</button>
                     </div>
                 </details>
-                <details id="categories-panel" class="shrink-0 mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600">
+                <details id="categories-panel" class="shrink-0 mb-2 px-3 py-2 bg-gray-900 rounded-lg border border-gray-600 manage-compact-header">
                     <summary class="cursor-pointer text-sm font-semibold text-gray-200">Categorías</summary>
                     <ul id="categories-list" class="space-y-2 mt-2 mb-2"></ul>
                     <div class="flex gap-2 flex-wrap items-center">
@@ -477,7 +477,7 @@
                         <button type="button" id="add-category-btn" class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-4 rounded-lg min-h-[44px] shrink-0">Agregar</button>
                     </div>
                 </details>
-                <details id="locations-panel" class="shrink-0 mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600">
+                <details id="locations-panel" class="shrink-0 mb-2 px-3 py-2 bg-gray-900 rounded-lg border border-gray-600 manage-compact-header">
                     <summary class="cursor-pointer text-sm font-semibold text-gray-200">Ubicaciones y orden de recorrido</summary>
                     <ul id="locations-sort-list" class="space-y-2 mt-2 mb-2"></ul>
                     <div class="flex gap-2 flex-wrap items-center">
@@ -485,18 +485,21 @@
                         <button type="button" id="add-location-btn" class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-4 rounded-lg min-h-[44px] shrink-0">Agregar</button>
                     </div>
                 </details>
-                <div class="flex flex-col sm:flex-row gap-2 mb-4 shrink-0">
-                    <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
-                    <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold min-h-[44px] shrink-0">+</button>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-2 mb-3 shrink-0">
-                    <label class="flex-1 cursor-pointer">
-                        <input type="file" id="items-excel-upload" class="hidden" accept=".xlsx,.xlsm,.xls">
-                        <span class="flex items-center justify-center w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-center text-sm">Importar lista desde Excel</span>
-                    </label>
-                    <button type="button" id="items-excel-diff-cancel-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px] text-sm">Ocultar comparación</button>
-                </div>
-                <p class="text-xs text-gray-500 mb-2 shrink-0">Desuso no entra en inventario/pedidos. Poca frecuencia se revisa al final. Ubicación define el orden de recorrido.</p>
+                <details id="manage-tools-panel" class="shrink-0 mb-2 px-3 py-2 bg-gray-900 rounded-lg border border-gray-600 manage-compact-header">
+                    <summary class="cursor-pointer text-sm font-semibold text-gray-200">Agregar o importar ítems</summary>
+                    <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                        <input type="text" id="new-item-name" placeholder="Nombre del nuevo ítem" class="flex-grow bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                        <button id="add-item-btn" class="bg-green-600 px-4 rounded-lg font-bold min-h-[44px] shrink-0">+</button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="file" id="items-excel-upload" class="hidden" accept=".xlsx,.xlsm,.xls">
+                            <span class="flex items-center justify-center w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg min-h-[44px] text-center text-sm">Importar lista desde Excel</span>
+                        </label>
+                        <button type="button" id="items-excel-diff-cancel-btn" class="hidden bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg min-h-[44px] text-sm">Ocultar comparación</button>
+                    </div>
+                </details>
+                <p class="text-xs text-gray-500 mb-1 shrink-0">Desuso no entra en inventario/pedidos. Poca frecuencia se revisa al final. Ubicación define el orden de recorrido.</p>
                 <div id="items-excel-diff-panel" class="hidden mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600 text-sm space-y-3 max-h-[40vh] overflow-y-auto shrink-0"></div>
                 <div id="manage-items-list" class="flex-grow overflow-y-auto overflow-x-auto pr-2 space-y-3 min-h-0"></div>
                 <button id="save-item-order-btn" class="mt-4 shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg min-h-[44px]">Guardar Orden</button>
@@ -776,6 +779,8 @@
             itemCategoryKeys: {},
             customCategories: [],
             disabledCategoryNames: [],
+            categoryOrder: [],
+            categoryAliases: {},
             plantaConfig: null,
             plantaHistory: []
         };
@@ -1055,13 +1060,25 @@
             ));
             const baseCategoryOptions = ['ACEIT', 'BEBID', 'BOTEL', 'CAFES', 'CARNI', 'CONSU', 'EMPAQ', 'LACTE', 'LIMPI', 'MENAJ', 'OTROS', 'PAPAS', 'POSTR', 'SALSA', 'SUMIN', 'TRIGO', 'VEGET'];
 
+            function resolveCategoryAlias(category) {
+                let resolved = String(category || UNCATEGORIZED);
+                const visited = new Set();
+                while (state.categoryAliases[resolved] && !visited.has(resolved)) {
+                    visited.add(resolved);
+                    resolved = state.categoryAliases[resolved];
+                }
+                return resolved;
+            }
+
             function categoryOptions() {
-                return [UNCATEGORIZED, ...baseCategoryOptions, ...state.customCategories]
+                const knownCategories = [...baseCategoryOptions, ...state.customCategories].map(resolveCategoryAlias);
+                const orderedCategories = [...state.categoryOrder, ...knownCategories];
+                return [UNCATEGORIZED, ...orderedCategories]
                     .filter((category, index, all) => category === UNCATEGORIZED || (!state.disabledCategoryNames.includes(category) && all.indexOf(category) === index));
             }
 
             function itemCategory(name) {
-                const category = state.itemCategoryKeys[normalizeCatalogKey(name)] || categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED;
+                const category = resolveCategoryAlias(state.itemCategoryKeys[normalizeCatalogKey(name)] || categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED);
                 return state.disabledCategoryNames.includes(category) ? UNCATEGORIZED : category;
             }
 
@@ -1099,7 +1116,9 @@
                     itemLocationIds: state.itemLocationIds,
                     itemCategoryKeys: state.itemCategoryKeys,
                     customCategories: state.customCategories,
-                    disabledCategoryNames: state.disabledCategoryNames
+                    disabledCategoryNames: state.disabledCategoryNames,
+                    categoryOrder: state.categoryOrder,
+                    categoryAliases: state.categoryAliases
                 });
             }
 
@@ -1234,6 +1253,43 @@
                     const name = document.createElement('span');
                     name.className = 'flex-1 text-gray-200 text-sm';
                     name.textContent = category;
+                    const moveUp = document.createElement('button');
+                    moveUp.type = 'button';
+                    moveUp.className = 'bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-lg text-sm min-h-[44px]';
+                    moveUp.textContent = '↑';
+                    moveUp.title = 'Subir categoría';
+                    const moveDown = document.createElement('button');
+                    moveDown.type = 'button';
+                    moveDown.className = 'bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-lg text-sm min-h-[44px]';
+                    moveDown.textContent = '↓';
+                    moveDown.title = 'Bajar categoría';
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-sm min-h-[44px]';
+                    edit.textContent = 'Editar';
+                    edit.addEventListener('click', async () => {
+                        const nextName = prompt('Nuevo nombre de categoría:', category);
+                        if (nextName === null) return;
+                        const newCategory = nextName.trim().toUpperCase();
+                        if (!newCategory || newCategory === UNCATEGORIZED) return alert('Escribí un nombre válido.');
+                        if (newCategory !== category && categoryOptions().includes(newCategory)) return alert('Esa categoría ya existe.');
+                        if (newCategory === category) return;
+                        state.categoryOrder = state.categoryOrder.map(item => item === category ? newCategory : item);
+                        state.customCategories = state.customCategories.map(item => item === category ? newCategory : item);
+                        state.disabledCategoryNames = state.disabledCategoryNames.map(item => item === category ? newCategory : item);
+                        Object.keys(state.categoryAliases).forEach(key => {
+                            if (state.categoryAliases[key] === category) state.categoryAliases[key] = newCategory;
+                        });
+                        state.categoryAliases[category] = newCategory;
+                        Object.keys(state.itemCategoryKeys).forEach(key => {
+                            if (state.itemCategoryKeys[key] === category) state.itemCategoryKeys[key] = newCategory;
+                        });
+                        await persistMasterItems();
+                        refreshManageLocationFilterOptions();
+                        renderCategoriesEditor();
+                        renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
+                        showToast('Categoría renombrada.');
+                    });
                     const remove = document.createElement('button');
                     remove.type = 'button';
                     remove.className = 'bg-red-800 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm min-h-[44px]';
@@ -1241,6 +1297,7 @@
                     remove.addEventListener('click', async () => {
                         if (!confirm(`¿Eliminar la categoría "${category}"? Los ítems asignados pasarán a Sin categoría.`)) return;
                         state.customCategories = state.customCategories.filter(item => item !== category);
+                        state.categoryOrder = state.categoryOrder.filter(item => item !== category);
                         if (!state.disabledCategoryNames.includes(category)) state.disabledCategoryNames.push(category);
                         Object.keys(state.itemCategoryKeys).forEach(key => {
                             if (state.itemCategoryKeys[key] === category) state.itemCategoryKeys[key] = UNCATEGORIZED;
@@ -1251,7 +1308,22 @@
                         renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
                         showToast('Categoría eliminada.');
                     });
-                    row.append(name, remove);
+                    const moveCategory = async (direction) => {
+                        const visibleCategories = categoryOptions().filter(item => item !== UNCATEGORIZED);
+                        const currentIndex = visibleCategories.indexOf(category);
+                        const targetIndex = currentIndex + direction;
+                        if (targetIndex < 0 || targetIndex >= visibleCategories.length) return;
+                        const nextOrder = [...visibleCategories];
+                        [nextOrder[currentIndex], nextOrder[targetIndex]] = [nextOrder[targetIndex], nextOrder[currentIndex]];
+                        state.categoryOrder = nextOrder;
+                        await persistMasterItems();
+                        refreshManageLocationFilterOptions();
+                        renderCategoriesEditor();
+                        showToast('Orden de categorías actualizado.');
+                    };
+                    moveUp.addEventListener('click', () => moveCategory(-1));
+                    moveDown.addEventListener('click', () => moveCategory(1));
+                    row.append(name, moveUp, moveDown, edit, remove);
                     list.appendChild(row);
                 });
             }
@@ -1504,6 +1576,13 @@
                             state.disabledCategoryNames = Array.isArray(docSnap.data().disabledCategoryNames)
                                 ? docSnap.data().disabledCategoryNames.map(category => String(category).trim().toUpperCase()).filter(Boolean)
                                 : [];
+                            state.categoryOrder = Array.isArray(docSnap.data().categoryOrder)
+                                ? docSnap.data().categoryOrder.map(category => String(category).trim().toUpperCase()).filter(Boolean)
+                                : [...baseCategoryOptions];
+                            const rawCategoryAliases = docSnap.data().categoryAliases;
+                            state.categoryAliases = rawCategoryAliases && typeof rawCategoryAliases === 'object' && !Array.isArray(rawCategoryAliases)
+                                ? Object.fromEntries(Object.entries(rawCategoryAliases).map(([key, value]) => [String(key).trim().toUpperCase(), String(value).trim().toUpperCase()]))
+                                : {};
                             if (completeItemCategories()) persistMasterItems();
                         } else {
                             setDoc(refs.masterItems(), {
@@ -1515,7 +1594,9 @@
                                 itemLocationIds: {},
                                 itemCategoryKeys: Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED])),
                                 customCategories: [],
-                                disabledCategoryNames: []
+                                disabledCategoryNames: [],
+                                categoryOrder: [...baseCategoryOptions],
+                                categoryAliases: {}
                             });
                             state.masterItems = initialItemsList;
                             state.alwaysNaItems = [];
@@ -1526,6 +1607,8 @@
                             state.itemCategoryKeys = Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED]));
                             state.customCategories = [];
                             state.disabledCategoryNames = [];
+                            state.categoryOrder = [...baseCategoryOptions];
+                            state.categoryAliases = {};
                         }
                     });
 
@@ -4767,6 +4850,7 @@
                 if (categoryOptions().includes(category)) return alert('Esa categoría ya existe.');
                 state.disabledCategoryNames = state.disabledCategoryNames.filter(name => name !== category);
                 state.customCategories.push(category);
+                state.categoryOrder.push(category);
                 el.newCategoryInput.value = '';
                 await persistMasterItems();
                 refreshManageLocationFilterOptions();
