@@ -423,7 +423,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3 shrink-0">
                     <input type="search" id="manage-items-search" placeholder="Buscar ítem..." class="md:col-span-2 w-full bg-gray-700 p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-2">
                         <select id="manage-filter-class" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por clase">
                             <option value="all">Clase: todas</option>
                             <option value="normal">Clase: normal</option>
@@ -433,6 +433,9 @@
                         <select id="manage-filter-location" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por ubicación">
                             <option value="all">Ubic.: todas</option>
                             <option value="none">Ubic.: sin asignar</option>
+                        </select>
+                        <select id="manage-filter-category" class="w-full bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]" title="Filtrar por categoría">
+                            <option value="all">Categoría: todas</option>
                         </select>
                     </div>
                 </div>
@@ -457,7 +460,21 @@
                                 <option value="">Quitar ubicación</option>
                             </select>
                         </div>
+                        <div class="flex flex-col gap-1 min-w-[130px] flex-1">
+                            <span class="text-xs text-gray-400">Categoría</span>
+                            <select id="bulk-category-apply" class="w-full bg-gray-700 text-white text-sm p-2 rounded-lg border border-gray-600 min-h-[44px]">
+                                <option value="__noop">— No cambiar categoría —</option>
+                            </select>
+                        </div>
                         <button type="button" id="bulk-apply-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg min-h-[44px] shrink-0">Aplicar</button>
+                    </div>
+                </details>
+                <details id="categories-panel" class="shrink-0 mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600">
+                    <summary class="cursor-pointer text-sm font-semibold text-gray-200">Categorías</summary>
+                    <ul id="categories-list" class="space-y-2 mt-2 mb-2"></ul>
+                    <div class="flex gap-2 flex-wrap items-center">
+                        <input type="text" id="new-category-input" placeholder="Nueva categoría" maxlength="40" class="flex-1 min-w-[140px] bg-gray-700 text-white p-2 rounded-lg border-2 border-gray-600 min-h-[44px]">
+                        <button type="button" id="add-category-btn" class="bg-teal-700 hover:bg-teal-600 text-white font-bold px-4 rounded-lg min-h-[44px] shrink-0">Agregar</button>
                     </div>
                 </details>
                 <details id="locations-panel" class="shrink-0 mb-2 p-3 bg-gray-900 rounded-lg border border-gray-600">
@@ -757,6 +774,8 @@
             inventoryLocations: [],
             itemLocationIds: {},
             itemCategoryKeys: {},
+            customCategories: [],
+            disabledCategoryNames: [],
             plantaConfig: null,
             plantaHistory: []
         };
@@ -865,10 +884,15 @@
                 locationsSortList: document.getElementById('locations-sort-list'),
                 newLocationInput: document.getElementById('new-location-input'),
                 addLocationBtn: document.getElementById('add-location-btn'),
+                categoriesList: document.getElementById('categories-list'),
+                newCategoryInput: document.getElementById('new-category-input'),
+                addCategoryBtn: document.getElementById('add-category-btn'),
                 manageFilterClass: document.getElementById('manage-filter-class'),
                 manageFilterLocation: document.getElementById('manage-filter-location'),
+                manageFilterCategory: document.getElementById('manage-filter-category'),
                 bulkClassApply: document.getElementById('bulk-class-apply'),
                 bulkLocationApply: document.getElementById('bulk-location-apply'),
+                bulkCategoryApply: document.getElementById('bulk-category-apply'),
                 bulkApplyBtn: document.getElementById('bulk-apply-btn'),
                 manageSelectVisibleBtn: document.getElementById('manage-select-visible-btn'),
                 manageClearSelectionBtn: document.getElementById('manage-clear-selection-btn'),
@@ -1029,10 +1053,16 @@
             const categoryByItemKey = new Map(Object.entries(categorySource).flatMap(([category, items]) =>
                 items.map(item => [normalizeCatalogKey(item), category])
             ));
-            const categoryOptions = [UNCATEGORIZED, 'ACEIT', 'BEBID', 'BOTEL', 'CAFES', 'CARNI', 'CONSU', 'EMPAQ', 'LACTE', 'LIMPI', 'MENAJ', 'OTROS', 'PAPAS', 'POSTR', 'SALSA', 'SUMIN', 'TRIGO', 'VEGET'];
+            const baseCategoryOptions = ['ACEIT', 'BEBID', 'BOTEL', 'CAFES', 'CARNI', 'CONSU', 'EMPAQ', 'LACTE', 'LIMPI', 'MENAJ', 'OTROS', 'PAPAS', 'POSTR', 'SALSA', 'SUMIN', 'TRIGO', 'VEGET'];
+
+            function categoryOptions() {
+                return [UNCATEGORIZED, ...baseCategoryOptions, ...state.customCategories]
+                    .filter((category, index, all) => category === UNCATEGORIZED || (!state.disabledCategoryNames.includes(category) && all.indexOf(category) === index));
+            }
 
             function itemCategory(name) {
-                return state.itemCategoryKeys[normalizeCatalogKey(name)] || categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED;
+                const category = state.itemCategoryKeys[normalizeCatalogKey(name)] || categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED;
+                return state.disabledCategoryNames.includes(category) ? UNCATEGORIZED : category;
             }
 
             function completeItemCategories() {
@@ -1067,7 +1097,9 @@
                     lowFrequencyItemKeys: state.lowFrequencyItemKeys,
                     inventoryLocations: state.inventoryLocations,
                     itemLocationIds: state.itemLocationIds,
-                    itemCategoryKeys: state.itemCategoryKeys
+                    itemCategoryKeys: state.itemCategoryKeys,
+                    customCategories: state.customCategories,
+                    disabledCategoryNames: state.disabledCategoryNames
                 });
             }
 
@@ -1148,7 +1180,9 @@
             function refreshManageLocationFilterOptions() {
                 const sel = el.manageFilterLocation;
                 const bulkLoc = el.bulkLocationApply;
-                if (!sel || !bulkLoc) return;
+                const categoryFilter = el.manageFilterCategory;
+                const bulkCategory = el.bulkCategoryApply;
+                if (!sel || !bulkLoc || !categoryFilter || !bulkCategory) return;
                 const curF = sel.value;
                 const curB = bulkLoc.value;
 
@@ -1171,6 +1205,55 @@
                 });
                 if ([...bulkLoc.options].some(o => o.value === curB)) bulkLoc.value = curB;
                 else bulkLoc.value = '__noop';
+
+                const currentCategoryFilter = categoryFilter.value;
+                const currentBulkCategory = bulkCategory.value;
+                categoryFilter.innerHTML = '<option value="all">Categoría: todas</option>';
+                bulkCategory.innerHTML = '<option value="__noop">— No cambiar categoría —</option>';
+                categoryOptions().forEach(category => {
+                    const filterOption = document.createElement('option');
+                    filterOption.value = category;
+                    filterOption.textContent = category;
+                    categoryFilter.appendChild(filterOption);
+                    const bulkOption = document.createElement('option');
+                    bulkOption.value = category;
+                    bulkOption.textContent = category;
+                    bulkCategory.appendChild(bulkOption);
+                });
+                categoryFilter.value = [...categoryFilter.options].some(o => o.value === currentCategoryFilter) ? currentCategoryFilter : 'all';
+                bulkCategory.value = [...bulkCategory.options].some(o => o.value === currentBulkCategory) ? currentBulkCategory : '__noop';
+            }
+
+            function renderCategoriesEditor() {
+                const list = el.categoriesList;
+                if (!list) return;
+                list.innerHTML = '';
+                categoryOptions().filter(category => category !== UNCATEGORIZED).forEach(category => {
+                    const row = document.createElement('li');
+                    row.className = 'flex items-center gap-2 bg-gray-800 p-2 rounded-lg border border-gray-700';
+                    const name = document.createElement('span');
+                    name.className = 'flex-1 text-gray-200 text-sm';
+                    name.textContent = category;
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'bg-red-800 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm min-h-[44px]';
+                    remove.textContent = 'Eliminar';
+                    remove.addEventListener('click', async () => {
+                        if (!confirm(`¿Eliminar la categoría "${category}"? Los ítems asignados pasarán a Sin categoría.`)) return;
+                        state.customCategories = state.customCategories.filter(item => item !== category);
+                        if (!state.disabledCategoryNames.includes(category)) state.disabledCategoryNames.push(category);
+                        Object.keys(state.itemCategoryKeys).forEach(key => {
+                            if (state.itemCategoryKeys[key] === category) state.itemCategoryKeys[key] = UNCATEGORIZED;
+                        });
+                        await persistMasterItems();
+                        refreshManageLocationFilterOptions();
+                        renderCategoriesEditor();
+                        renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
+                        showToast('Categoría eliminada.');
+                    });
+                    row.append(name, remove);
+                    list.appendChild(row);
+                });
             }
 
             function renderLocationsEditor() {
@@ -1255,6 +1338,9 @@
 
                 if (locFilter === 'none' && hasLoc) return false;
                 if (locFilter !== 'all' && locFilter !== 'none' && lid !== locFilter) return false;
+
+                const categoryFilter = el.manageFilterCategory?.value || 'all';
+                if (categoryFilter !== 'all' && itemCategory(name) !== categoryFilter) return false;
 
                 return true;
             }
@@ -1412,6 +1498,12 @@
                             state.itemCategoryKeys = rawCategoryMap && typeof rawCategoryMap === 'object' && !Array.isArray(rawCategoryMap)
                                 ? Object.fromEntries(Object.entries(rawCategoryMap).map(([k, v]) => [normalizeCatalogKey(k), String(v)]))
                                 : {};
+                            state.customCategories = Array.isArray(docSnap.data().customCategories)
+                                ? docSnap.data().customCategories.map(category => String(category).trim().toUpperCase()).filter(Boolean)
+                                : [];
+                            state.disabledCategoryNames = Array.isArray(docSnap.data().disabledCategoryNames)
+                                ? docSnap.data().disabledCategoryNames.map(category => String(category).trim().toUpperCase()).filter(Boolean)
+                                : [];
                             if (completeItemCategories()) persistMasterItems();
                         } else {
                             setDoc(refs.masterItems(), {
@@ -1421,7 +1513,9 @@
                                 lowFrequencyItemKeys: [],
                                 inventoryLocations: [],
                                 itemLocationIds: {},
-                                itemCategoryKeys: Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED]))
+                                itemCategoryKeys: Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED])),
+                                customCategories: [],
+                                disabledCategoryNames: []
                             });
                             state.masterItems = initialItemsList;
                             state.alwaysNaItems = [];
@@ -1430,6 +1524,8 @@
                             state.inventoryLocations = [];
                             state.itemLocationIds = {};
                             state.itemCategoryKeys = Object.fromEntries(initialItemsList.map(name => [normalizeCatalogKey(name), categoryByItemKey.get(normalizeCatalogKey(name)) || UNCATEGORIZED]));
+                            state.customCategories = [];
+                            state.disabledCategoryNames = [];
                         }
                     });
 
@@ -3118,6 +3214,7 @@
                 if (!opts.skipLocationsEditor) {
                     refreshManageLocationFilterOptions();
                     renderLocationsEditor();
+                    renderCategoriesEditor();
                 }
                 el.manageItemsList.innerHTML = '';
                 const q = searchTerm.toLowerCase();
@@ -3224,7 +3321,7 @@
                     categoryWrap.appendChild(document.createTextNode('Categoría '));
                     const categorySel = document.createElement('select');
                     categorySel.className = 'bg-gray-600 text-white text-xs rounded-md border border-gray-500 px-2 py-2 min-h-[44px] max-w-[10rem]';
-                    categoryOptions.forEach(category => {
+                    categoryOptions().forEach(category => {
                         const option = document.createElement('option');
                         option.value = category;
                         option.textContent = category;
@@ -4639,6 +4736,8 @@
                 renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true }));
             el.manageFilterLocation?.addEventListener('change', () =>
                 renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true }));
+            el.manageFilterCategory?.addEventListener('change', () =>
+                renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true }));
 
             el.addLocationBtn?.addEventListener('click', async () => {
                 const raw = el.newLocationInput.value.trim();
@@ -4661,6 +4760,26 @@
                 }
             });
 
+            el.addCategoryBtn?.addEventListener('click', async () => {
+                const category = el.newCategoryInput.value.trim().toUpperCase();
+                if (!category) return alert('Escribí un nombre para la categoría.');
+                if (category === UNCATEGORIZED) return alert('"Sin categoría" ya existe por defecto.');
+                if (categoryOptions().includes(category)) return alert('Esa categoría ya existe.');
+                state.disabledCategoryNames = state.disabledCategoryNames.filter(name => name !== category);
+                state.customCategories.push(category);
+                el.newCategoryInput.value = '';
+                await persistMasterItems();
+                refreshManageLocationFilterOptions();
+                renderCategoriesEditor();
+                showToast('Categoría agregada.');
+            });
+            el.newCategoryInput?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    el.addCategoryBtn?.click();
+                }
+            });
+
             el.manageSelectVisibleBtn?.addEventListener('click', () => {
                 el.manageItemsList.querySelectorAll('.manage-item-cb').forEach(cb => { cb.checked = true; });
             });
@@ -4675,8 +4794,9 @@
                 }
                 const cls = el.bulkClassApply.value;
                 const loc = el.bulkLocationApply.value;
-                if (!cls && loc === '__noop') {
-                    alert('Elegí una clase y/o una ubicación para aplicar.');
+                const category = el.bulkCategoryApply.value;
+                if (!cls && loc === '__noop' && category === '__noop') {
+                    alert('Elegí una clase, ubicación y/o categoría para aplicar.');
                     return;
                 }
                 keys.forEach(k => {
@@ -4690,10 +4810,12 @@
                         if (!loc) delete state.itemLocationIds[k];
                         else state.itemLocationIds[k] = loc;
                     }
+                    if (category !== '__noop') state.itemCategoryKeys[k] = category;
                 });
                 await persistMasterItems();
                 el.bulkClassApply.value = '';
                 el.bulkLocationApply.value = '__noop';
+                el.bulkCategoryApply.value = '__noop';
                 showToast('Cambios aplicados a los ítems seleccionados.');
                 renderManageItemsList(el.manageItemsSearch.value, { skipLocationsEditor: true });
             });
